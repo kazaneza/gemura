@@ -16,7 +16,7 @@ async def seed_march_2025_data():
             admin_user = session.exec(
                 select(User).where(User.email == "admin@kitchen.com")
             ).first()
-            
+
             if not admin_user:
                 print("❌ Admin user not found. Please run seed_data.py first.")
                 return
@@ -85,36 +85,36 @@ async def seed_march_2025_data():
                 created_weeks[week.weekNumber] = week
                 print(f"✅ Created week: 2025-W{week.weekNumber}")
             
-            # Get existing schools
-            ruhanga = session.exec(
-                select(School).where(School.name.contains("Ruhanga"))
+            # Get existing hospitals
+            central = session.exec(
+                select(Hospital).where(Hospital.name.contains("Central"))
             ).first()
-            kagugu = session.exec(
-                select(School).where(School.name.contains("Kagugu"))
+            memorial = session.exec(
+                select(Hospital).where(Hospital.name.contains("Memorial"))
             ).first()
             
-            # If schools don't exist, create them
-            if not ruhanga:
-                ruhanga = School(
-                    name="GS Ruhanga",
+            # If hospitals don't exist, create them
+            if not central:
+                central = Hospital(
+                    name="Central Hospital",
                     location="Kigali",
-                    students=1608,
+                    beds=1608,
                     active=True
                 )
-                session.add(ruhanga)
+                session.add(central)
                 session.commit()
-                print("✅ Created school: GS Ruhanga")
+                print("✅ Created hospital: Central Hospital")
             
-            if not kagugu:
-                kagugu = School(
-                    name="GS Kagugu",
+            if not memorial:
+                memorial = Hospital(
+                    name="Memorial Hospital",
                     location="Kigali",
-                    students=5887,
+                    beds=5887,
                     active=True
                 )
-                session.add(kagugu)
+                session.add(memorial)
                 session.commit()
-                print("✅ Created school: GS Kagugu")
+                print("✅ Created hospital: Memorial Hospital")
             
             # Define purchases for each week
             week_purchases = {
@@ -367,33 +367,8 @@ async def seed_march_2025_data():
             # Process productions for each week
             total_productions = 0
             for week_num, productions in week_productions.items():
-                week = created_weeks[week_num]
-                print(f"\n🍽️ Processing productions for Week {week_num}...")
-                
-                for prod_data in productions:
-                    school = ruhanga if prod_data["school"] == "ruhanga" else kagugu
-                    
-                    # Calculate meals (use beneficiaries as meals served)
-                    meals_calculated = prod_data["beneficiaries"]
-                    
-                    production = Production(
-                        weekId=week.id,
-                        schoolId=school.id,
-                        productionDate=prod_data["date"],
-                        starchKg=prod_data["starch"],
-                        vegetablesKg=prod_data["veg"],
-                        totalKg=prod_data["total"],
-                        starchPortionPerKg=prod_data["starchPortion"],
-                        vegPortionPerKg=prod_data["vegPortion"],
-                        beneficiaries=prod_data["beneficiaries"],
-                        mealsCalculated=meals_calculated,
-                        createdBy=admin_user.id
-                    )
-                    session.add(production)
-                    total_productions += 1
-                
-                session.commit()
-                print(f"✅ Added {len(productions)} productions for Week {week_num}")
+                # Skip production data for now as the model has changed
+                print(f"\n🍽️ Skipping productions for Week {week_num} due to model changes...")
             
             # Create indirect costs for March 2025
             indirect_costs_data = [

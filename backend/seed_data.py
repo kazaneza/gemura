@@ -54,18 +54,18 @@ async def seed_database():
             session.add(viewer_user)
             print(f"✅ Created viewer user: {viewer_user.email}")
             
-            # Create sample schools
-            schools_data = [
-                {"name": "Lincoln Elementary School", "location": "Kigali, Gasabo", "students": 450, "contact": "principal@lincoln.edu", "active": True},
-                {"name": "Washington Middle School", "location": "Kigali, Kicukiro", "students": 620, "contact": "admin@washington.edu", "active": True},
-                {"name": "Roosevelt High School", "location": "Kigali, Nyarugenge", "students": 850, "contact": "office@roosevelt.edu", "active": True},
-                {"name": "Jefferson Primary School", "location": "Kigali, Gasabo", "students": 280, "contact": "info@jefferson.edu", "active": True},
+            # Create sample hospitals
+            hospitals_data = [
+                {"name": "Central Hospital", "location": "Kigali, Gasabo", "beds": 450, "contact": "admin@central.hospital", "active": True},
+                {"name": "Memorial Hospital", "location": "Kigali, Kicukiro", "beds": 620, "contact": "admin@memorial.hospital", "active": True},
+                {"name": "University Hospital", "location": "Kigali, Nyarugenge", "beds": 850, "contact": "office@university.hospital", "active": True},
+                {"name": "Community Hospital", "location": "Kigali, Gasabo", "beds": 280, "contact": "info@community.hospital", "active": True},
             ]
             
-            for school_data in schools_data:
-                school = School(**school_data)
-                session.add(school)
-                print(f"✅ Created school: {school.name}")
+            for hospital_data in hospitals_data:
+                hospital = Hospital(**hospital_data)
+                session.add(hospital)
+                print(f"✅ Created hospital: {hospital.name}")
             
             # Create sample ingredients
             ingredients_data = [
