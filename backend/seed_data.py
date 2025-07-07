@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta
 from sqlmodel import Session, create_engine, SQLModel
-from app.models import User, School, Ingredient, Week, UserRole, IngredientUnit, WeekStatus
+from app.models import User, Hospital, Ingredient, Week, UserRole, IngredientUnit, WeekStatus
 from app.auth import get_password_hash
 from app.database import engine
 
