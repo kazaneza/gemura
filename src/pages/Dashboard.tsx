@@ -9,7 +9,7 @@ import {
   BarChart3,
   Calculator
 } from 'lucide-react';
-import { purchasesAPI, productionAPI, schoolsAPI } from '../services/api';
+import { purchasesAPI, productionAPI, hospitalsAPI } from '../services/api';
 
 interface DashboardData {
   yesterdayMeals: number;
@@ -17,6 +17,7 @@ interface DashboardData {
   currentWeekCPM: number;
   monthToDateAvgCPM: number;
   schoolsContribution: Array<{
+  hospitalsContribution: Array<{
     name: string;
     meals: number;
     percentage: number;
@@ -37,7 +38,7 @@ const Dashboard: React.FC = () => {
     weekToDateMeals: 0,
     currentWeekCPM: 0,
     monthToDateAvgCPM: 0,
-    schoolsContribution: [],
+    hospitalsContribution: [],
     sevenDayTrend: [],
     monthCPMTrend: []
   });
@@ -79,7 +80,7 @@ const Dashboard: React.FC = () => {
         monthProductions,
         sevenDayPurchases,
         sevenDayProductions,
-        schools
+        hospitals
       ] = await Promise.all([
         // Yesterday data
         purchasesAPI.getPurchases({
@@ -118,7 +119,8 @@ const Dashboard: React.FC = () => {
           end_date: today.toISOString()
         }),
         // Schools for contribution calculation
-        schoolsAPI.getSchools()
+        // Hospitals for contribution calculation
+        hospitalsAPI.getHospitals()
       ]);
 
       // Calculate metrics using same logic as Daily Entry (pax not mealsCalculated)
@@ -146,33 +148,33 @@ const Dashboard: React.FC = () => {
       const monthToDateAvgCPM = monthCostPerMeal + monthOverhead;
 
       // Yesterday's school contribution
-      const schoolsContribution: Array<{ name: string; meals: number; percentage: number }> = [];
+      const hospitalsContribution: Array<{ name: string; meals: number; percentage: number }> = [];
       if (yesterdayMeals > 0) {
-        const schoolMeals: { [key: string]: { meals: number; school: any } } = {};
+        const hospitalMeals: { [key: string]: { meals: number; hospital: any } } = {};
         
         yesterdayProductions.forEach((production: any) => {
-          const schoolId = production.schoolId;
-          if (!schoolMeals[schoolId]) {
-            schoolMeals[schoolId] = {
+          const hospitalId = production.hospitalId;
+          if (!hospitalMeals[hospitalId]) {
+            hospitalMeals[hospitalId] = {
               meals: 0,
-              school: schools.find((s: any) => s.id === schoolId)
+              hospital: hospitals.find((h: any) => h.id === hospitalId)
             };
           }
-          schoolMeals[schoolId].meals += production.beneficiaries || 0;
+          hospitalMeals[hospitalId].meals += production.patientsServed || 0;
         });
         
-        Object.values(schoolMeals).forEach(({ meals, school }) => {
-          if (school && meals > 0) {
+        Object.values(hospitalMeals).forEach(({ meals, hospital }) => {
+          if (hospital && meals > 0) {
             const percentage = (meals / yesterdayMeals) * 100;
-            schoolsContribution.push({
-              name: school.name,
+            hospitalsContribution.push({
+              name: hospital.name,
               meals,
               percentage: Math.round(percentage * 10) / 10
             });
           }
         });
         
-        schoolsContribution.sort((a, b) => b.meals - a.meals);
+        hospitalsContribution.sort((a, b) => b.meals - a.meals);
       }
 
       // 7-day trend
@@ -185,7 +187,7 @@ const Dashboard: React.FC = () => {
         const dayProductions = sevenDayProductions.filter((prod: any) => 
           new Date(prod.productionDate).toISOString().split('T')[0] === dateStr
         );
-        const dayMeals = dayProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiaries || 0), 0);
+        const dayMeals = dayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
         
         sevenDayTrend.push({
           date: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -210,7 +212,6 @@ const Dashboard: React.FC = () => {
           return purchaseDate >= weekStartTrend && purchaseDate <= weekEndTrend;
         });
         
-        const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.beneficiaries || 0), 0);
         const weekCostTrend = weekPurchasesTrend.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
         
         const weekCPMTrend = weekMealsTrend > 0 ? 
@@ -228,7 +229,7 @@ const Dashboard: React.FC = () => {
         weekToDateMeals,
         currentWeekCPM: Math.round(currentWeekCPM),
         monthToDateAvgCPM: Math.round(monthToDateAvgCPM),
-        schoolsContribution,
+        hospitalsContribution,
         sevenDayTrend,
         monthCPMTrend
       });
@@ -485,32 +486,32 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Schools Contribution Yesterday */}
+        {/* Hospitals Contribution Yesterday */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Yesterday's School Contribution</h3>
+            <h3 className="text-lg font-medium text-gray-900">Yesterday's Hospital Contribution</h3>
           </div>
           <div className="p-6">
-            {dashboardData.schoolsContribution.length === 0 ? (
+            {dashboardData.hospitalsContribution.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No data available
               </div>
             ) : (
               <div className="space-y-4">
-                {dashboardData.schoolsContribution.map((school, index) => (
+                {dashboardData.hospitalsContribution.map((hospital, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900 truncate">{school.name}</span>
-                        <span className="text-sm text-gray-500">{school.meals}</span>
+                        <span className="text-sm font-medium text-gray-900 truncate">{hospital.name}</span>
+                        <span className="text-sm text-gray-500">{hospital.meals}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${school.percentage}%` }}
+                          style={{ width: `${hospital.percentage}%` }}
                         />
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">{school.percentage}%</div>
+                      <div className="text-xs text-gray-500 mt-1">{hospital.percentage}%</div>
                     </div>
                   </div>
                 ))}
@@ -528,7 +529,7 @@ const Dashboard: React.FC = () => {
             <h4 className="text-blue-900 font-medium">Real-Time Dashboard</h4>
             <p className="text-blue-800 text-sm mt-1">
               This dashboard uses real-time client-side aggregation for accurate data. 
-              All calculations use the same "pax not mealsCalculated" logic as Daily Entry with {overheadPercentage}% overhead.
+              All calculations use the same "pax not patientsServed" logic as Daily Entry with {overheadPercentage}% overhead.
             </p>
           </div>
         </div>

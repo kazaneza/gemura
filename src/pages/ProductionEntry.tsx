@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Check, X, Calendar, AlertCircle, Eye, Edit2, Trash2 } from 'lucide-react';
-import { schoolsAPI, productionAPI } from '../services/api';
+import { hospitalsAPI, productionAPI } from '../services/api';
 import MonthSelector from '../components/MonthSelector';
 import { generateAvailableMonths, getCurrentMonth, getMonthId, parseMonthId, getMonthStatus } from '../utils/monthlySystem';
 
-interface School {
+interface Hospital {
   id: string;
   name: string;
   location: string;
-  students: number;
+  patients: number;
   active: boolean;
 }
 
-interface SchoolProduction {
-  schoolId: string;
-  schoolName: string;
+interface HospitalProduction {
+  hospitalId: string;
+  hospitalName: string;
   starchProduced: number;
   vegetablesProduced: number;
   totalKg: number;
@@ -26,7 +26,7 @@ interface SchoolProduction {
 
 interface ExistingProduction {
   id: string;
-  schoolId: string;
+  hospitalId: string;
   productionDate: string;
   starchKg: number;
   vegetablesKg: number;
@@ -35,16 +35,16 @@ interface ExistingProduction {
   vegPortionPerKg: number;
   beneficiaries: number;
   mealsCalculated: number;
-  school?: {
+  hospital?: {
     name: string;
   };
 }
 
 const ProductionEntry: React.FC = () => {
-  const [activeSchools, setActiveSchools] = useState<School[]>([]);
+  const [activeHospitals, setActiveHospitals] = useState<Hospital[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(getMonthId(getCurrentMonth()));
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [schoolProductions, setSchoolProductions] = useState<SchoolProduction[]>([]);
+  const [hospitalProductions, setHospitalProductions] = useState<HospitalProduction[]>([]);
   const [existingProductions, setExistingProductions] = useState<ExistingProduction[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -58,15 +58,15 @@ const ProductionEntry: React.FC = () => {
 
   // Load schools on component mount
   useEffect(() => {
-    loadSchools();
+    loadHospitals();
   }, []);
 
   // Initialize school productions when schools are loaded
   useEffect(() => {
-    if (activeSchools.length > 0) {
-      initializeSchoolProductions();
+    if (activeHospitals.length > 0) {
+      initializeHospitalProductions();
     }
-  }, [activeSchools]);
+  }, [activeHospitals]);
 
   // Load existing productions when month changes
   useEffect(() => {
@@ -87,13 +87,12 @@ const ProductionEntry: React.FC = () => {
     }
   }, [selectedMonth]);
 
-  const loadSchools = async () => {
     try {
-      const data = await schoolsAPI.getSchools();
-      const active = data.filter((school: School) => school.active);
-      setActiveSchools(active);
+      const data = await hospitalsAPI.getHospitals();
+      const active = data.filter((hospital: Hospital) => hospital.active);
+      setActiveHospitals(active);
     } catch (err: any) {
-      setError('Failed to load schools');
+      setError('Failed to load hospitals');
     }
   };
 
@@ -115,10 +114,9 @@ const ProductionEntry: React.FC = () => {
     }
   };
 
-  const initializeSchoolProductions = () => {
-    const initialProductions = activeSchools.map(school => ({
-      schoolId: school.id,
-      schoolName: school.name,
+    const initialProductions = activeHospitals.map(hospital => ({
+      hospitalId: hospital.id,
+      hospitalName: hospital.name,
       starchProduced: 0,
       vegetablesProduced: 0,
       totalKg: 0,
@@ -127,7 +125,7 @@ const ProductionEntry: React.FC = () => {
       pax: 0,
       mealsCalculated: 0,
     }));
-    setSchoolProductions(initialProductions);
+    setHospitalProductions(initialProductions);
   };
 
   const showSuccessMessage = (message: string) => {
@@ -136,10 +134,11 @@ const ProductionEntry: React.FC = () => {
   };
 
   // Update school production data
-  const updateSchoolProduction = (schoolId: string, field: keyof SchoolProduction, value: number) => {
-    setSchoolProductions(productions => 
+  // Update hospital production data
+  const updateHospitalProduction = (hospitalId: string, field: keyof HospitalProduction, value: number) => {
+    setHospitalProductions(productions => 
       productions.map(production => {
-        if (production.schoolId === schoolId) {
+        if (production.hospitalId === hospitalId) {
           const updatedProduction = { ...production, [field]: value };
           
           // Auto-calculate total kg
@@ -193,24 +192,24 @@ const ProductionEntry: React.FC = () => {
 
   // Calculate daily summary
   const dailySummary = {
-    totalKgProduced: schoolProductions.reduce((sum, school) => sum + school.totalKg, 0),
-    totalPax: schoolProductions.reduce((sum, school) => sum + school.pax, 0),
-    totalMealsCalculated: schoolProductions.reduce((sum, school) => sum + school.mealsCalculated, 0),
-    averagePortionsPerKg: schoolProductions.length > 0 
-      ? schoolProductions.reduce((sum, school) => {
-          const avgPortions = school.totalKg > 0 ? school.mealsCalculated / school.totalKg : 0;
+    totalKgProduced: hospitalProductions.reduce((sum, hospital) => sum + hospital.totalKg, 0),
+    totalPax: hospitalProductions.reduce((sum, hospital) => sum + hospital.pax, 0),
+    totalMealsCalculated: hospitalProductions.reduce((sum, hospital) => sum + hospital.mealsCalculated, 0),
+    averagePortionsPerKg: hospitalProductions.length > 0 
+      ? hospitalProductions.reduce((sum, hospital) => {
+          const avgPortions = hospital.totalKg > 0 ? hospital.mealsCalculated / hospital.totalKg : 0;
           return sum + avgPortions;
-        }, 0) / schoolProductions.length
+        }, 0) / hospitalProductions.length
       : 0,
   };
 
   // Calculate monthly summary from existing data
   const monthlySummary = {
     totalProductions: existingProductions.length,
-    totalMealsProduced: existingProductions.reduce((sum, prod) => sum + prod.mealsCalculated, 0),
+    totalMealsProduced: existingProductions.reduce((sum, prod) => sum + (prod.mealsCalculated || 0), 0),
     totalKgProduced: existingProductions.reduce((sum, prod) => sum + prod.totalKg, 0),
     uniqueDays: new Set(existingProductions.map(prod => new Date(prod.productionDate).toDateString())).size,
-    schoolsServed: new Set(existingProductions.map(prod => prod.schoolId)).size
+    hospitalsServed: new Set(existingProductions.map(prod => prod.hospitalId)).size
   };
 
   // Validate form
@@ -228,30 +227,30 @@ const ProductionEntry: React.FC = () => {
       errors.push('Selected date must be within the selected month');
     }
 
-    const validProductions = schoolProductions.filter(school => 
-      school.starchProduced > 0 || school.vegetablesProduced > 0 || school.pax > 0
+    const validProductions = hospitalProductions.filter(hospital => 
+      hospital.starchProduced > 0 || hospital.vegetablesProduced > 0 || hospital.pax > 0
     );
 
     if (validProductions.length === 0) {
-      errors.push('At least one school must have production data');
+      errors.push('At least one hospital must have production data');
     }
     
-    schoolProductions.forEach((school) => {
-      if (school.starchProduced > 0 || school.vegetablesProduced > 0 || school.pax > 0) {
-        if (school.starchProduced < 0) {
-          errors.push(`${school.schoolName}: Starch produced cannot be negative`);
+    hospitalProductions.forEach((hospital) => {
+      if (hospital.starchProduced > 0 || hospital.vegetablesProduced > 0 || hospital.pax > 0) {
+        if (hospital.starchProduced < 0) {
+          errors.push(`${hospital.hospitalName}: Starch produced cannot be negative`);
         }
-        if (school.vegetablesProduced < 0) {
-          errors.push(`${school.schoolName}: Vegetables produced cannot be negative`);
+        if (hospital.vegetablesProduced < 0) {
+          errors.push(`${hospital.hospitalName}: Vegetables produced cannot be negative`);
         }
-        if (school.starchPortions < 0) {
-          errors.push(`${school.schoolName}: Starch portions cannot be negative`);
+        if (hospital.starchPortions < 0) {
+          errors.push(`${hospital.hospitalName}: Starch portions cannot be negative`);
         }
-        if (school.vegPortions < 0) {
-          errors.push(`${school.schoolName}: Vegetable portions cannot be negative`);
+        if (hospital.vegPortions < 0) {
+          errors.push(`${hospital.hospitalName}: Vegetable portions cannot be negative`);
         }
-        if (school.pax < 0) {
-          errors.push(`${school.schoolName}: Pax cannot be negative`);
+        if (hospital.pax < 0) {
+          errors.push(`${hospital.hospitalName}: Pax cannot be negative`);
         }
       }
     });
@@ -276,21 +275,21 @@ const ProductionEntry: React.FC = () => {
 
     try {
       // Filter out schools with no production data
-      const validProductions = schoolProductions.filter(school => 
-        school.starchProduced > 0 || school.vegetablesProduced > 0 || school.pax > 0
+      const validProductions = hospitalProductions.filter(hospital => 
+        hospital.starchProduced > 0 || hospital.vegetablesProduced > 0 || hospital.pax > 0
       );
 
       // Create production records for each school
       for (const production of validProductions) {
         const productionData = {
-          schoolId: production.schoolId,
+          hospitalId: production.hospitalId,
           productionDate: new Date(selectedDate).toISOString(),
           starchKg: production.starchProduced,
           vegetablesKg: production.vegetablesProduced,
           totalKg: production.totalKg,
           starchPortionPerKg: production.starchPortions || 0,
           vegPortionPerKg: production.vegPortions || 0,
-          beneficiaries: production.pax,
+          patientsServed: production.pax,
           mealsCalculated: production.mealsCalculated,
           weekId: 'temp-week-id' // This would be calculated based on the date
         };
@@ -299,7 +298,7 @@ const ProductionEntry: React.FC = () => {
       }
 
       // Reset form and reload data
-      initializeSchoolProductions();
+      initializeHospitalProductions();
       await loadExistingProductions();
       setValidationErrors([]);
       showSuccessMessage(`Production data for ${currentMonthInfo.monthName} saved successfully!`);
@@ -414,7 +413,8 @@ const ProductionEntry: React.FC = () => {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">{monthlySummary.schoolsServed}</div>
-              <div className="text-sm text-gray-500">Schools Served</div>
+              <div className="text-2xl font-bold text-red-600">{monthlySummary.hospitalsServed}</div>
+              <div className="text-sm text-gray-500">Hospitals Served</div>
             </div>
           </div>
         </div>
@@ -466,7 +466,7 @@ const ProductionEntry: React.FC = () => {
                           {new Date(production.productionDate).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {production.school?.name || 'Unknown School'}
+                          {production.hospital?.name || 'Unknown Hospital'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {production.starchKg.toFixed(1)}
@@ -478,7 +478,7 @@ const ProductionEntry: React.FC = () => {
                           {production.totalKg.toFixed(1)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {production.beneficiaries.toLocaleString()}
+                          {production.patientsServed.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                           {production.mealsCalculated.toLocaleString()}
@@ -540,6 +540,7 @@ const ProductionEntry: React.FC = () => {
       </div>
 
       {/* School Production Forms */}
+      {/* Hospital Production Forms */}
       <div className="space-y-4">
         <div className="bg-white shadow-sm rounded-lg border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -564,10 +565,9 @@ const ProductionEntry: React.FC = () => {
           </div>
         </div>
 
-        {schoolProductions.map((school) => (
-          <div key={school.schoolId} className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div key={hospital.hospitalId} className="bg-white shadow-sm rounded-lg border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">{school.schoolName}</h3>
+              <h3 className="text-lg font-medium text-gray-900">{hospital.hospitalName}</h3>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -578,8 +578,8 @@ const ProductionEntry: React.FC = () => {
                     type="number"
                     min="0"
                     step="0.1"
-                    value={school.starchProduced || ''}
-                    onChange={(e) => updateSchoolProduction(school.schoolId, 'starchProduced', parseFloat(e.target.value) || 0)}
+                    value={hospital.starchProduced || ''}
+                    onChange={(e) => updateHospitalProduction(hospital.hospitalId, 'starchProduced', parseFloat(e.target.value) || 0)}
                     disabled={!monthStatus.canEdit}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                       !monthStatus.canEdit ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -595,8 +595,8 @@ const ProductionEntry: React.FC = () => {
                     type="number"
                     min="0"
                     step="0.1"
-                    value={school.vegetablesProduced || ''}
-                    onChange={(e) => updateSchoolProduction(school.schoolId, 'vegetablesProduced', parseFloat(e.target.value) || 0)}
+                    value={hospital.vegetablesProduced || ''}
+                    onChange={(e) => updateHospitalProduction(hospital.hospitalId, 'vegetablesProduced', parseFloat(e.target.value) || 0)}
                     disabled={!monthStatus.canEdit}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                       !monthStatus.canEdit ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -609,7 +609,7 @@ const ProductionEntry: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Total Kg</label>
                   <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-900 font-medium">
-                    {school.totalKg.toFixed(1)} kg
+                    {hospital.totalKg.toFixed(1)} kg
                   </div>
                 </div>
 
@@ -620,8 +620,8 @@ const ProductionEntry: React.FC = () => {
                     type="number"
                     min="0"
                     step="0.1"
-                    value={school.starchPortions || ''}
-                    onChange={(e) => updateSchoolProduction(school.schoolId, 'starchPortions', parseFloat(e.target.value) || 0)}
+                    value={hospital.starchPortions || ''}
+                    onChange={(e) => updateHospitalProduction(hospital.hospitalId, 'starchPortions', parseFloat(e.target.value) || 0)}
                     disabled={!monthStatus.canEdit}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                       !monthStatus.canEdit ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -637,8 +637,8 @@ const ProductionEntry: React.FC = () => {
                     type="number"
                     min="0"
                     step="0.1"
-                    value={school.vegPortions || ''}
-                    onChange={(e) => updateSchoolProduction(school.schoolId, 'vegPortions', parseFloat(e.target.value) || 0)}
+                    value={hospital.vegPortions || ''}
+                    onChange={(e) => updateHospitalProduction(hospital.hospitalId, 'vegPortions', parseFloat(e.target.value) || 0)}
                     disabled={!monthStatus.canEdit}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                       !monthStatus.canEdit ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -653,8 +653,8 @@ const ProductionEntry: React.FC = () => {
                   <input
                     type="number"
                     min="0"
-                    value={school.pax || ''}
-                    onChange={(e) => updateSchoolProduction(school.schoolId, 'pax', parseInt(e.target.value) || 0)}
+                    value={hospital.pax || ''}
+                    onChange={(e) => updateHospitalProduction(hospital.hospitalId, 'pax', parseInt(e.target.value) || 0)}
                     disabled={!monthStatus.canEdit}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                       !monthStatus.canEdit ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -667,31 +667,32 @@ const ProductionEntry: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Meals Calculated</label>
                   <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-blue-50 text-blue-900 font-medium">
-                    {school.mealsCalculated.toLocaleString()} meals
+                    {hospital.mealsCalculated.toLocaleString()} meals
                   </div>
                 </div>
               </div>
 
               {/* School Summary */}
+              {/* Hospital Summary */}
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-gray-600">Starch Meals:</span>
                     <div className="font-medium text-gray-900">
-                      {(school.starchProduced * school.starchPortions).toLocaleString()}
+                      {(hospital.starchProduced * hospital.starchPortions).toLocaleString()}
                     </div>
                   </div>
                   <div>
                     <span className="text-gray-600">Vegetable Meals:</span>
                     <div className="font-medium text-gray-900">
-                      {(school.vegetablesProduced * school.vegPortions).toLocaleString()}
+                      {(hospital.vegetablesProduced * hospital.vegPortions).toLocaleString()}
                     </div>
                   </div>
                   <div>
                     <span className="text-gray-600">Coverage:</span>
                     <div className="font-medium text-gray-900">
-                      {school.pax > 0 
-                        ? `${Math.round((school.mealsCalculated / school.pax) * 100)}%`
+                      {hospital.pax > 0 
+                        ? `${Math.round((hospital.mealsCalculated / hospital.pax) * 100)}%`
                         : '0%'
                       }
                     </div>
