@@ -9,7 +9,7 @@ import {
   DollarSign,
   FileText,
   Settings,
-  School,
+  Building2,
   ChefHat,
   User,
   LogOut,
@@ -114,14 +114,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: 'Settings',
       icon: Settings,
       current: location.pathname.startsWith('/settings'),
-      show: canAccessRoute(user.role, '/settings/schools') || canAccessRoute(user.role, '/settings/ingredients'),
+      show: canAccessRoute(user.role, '/settings/hospitals') || canAccessRoute(user.role, '/settings/ingredients'),
       children: [
         { 
-          name: 'Schools', 
-          href: '/settings/schools', 
-          icon: School, 
-          current: location.pathname === '/settings/schools',
-          show: canAccessRoute(user.role, '/settings/schools')
+          name: 'Hospitals', 
+          href: '/settings/hospitals', 
+          icon: Building2, 
+          current: location.pathname === '/settings/hospitals',
+          show: canAccessRoute(user.role, '/settings/hospitals')
         },
         { 
           name: 'Ingredients', 
@@ -218,7 +218,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 bg-red-600 px-4">
-          <h1 className="text-white text-xl font-bold">Solid-CPM</h1>
+          <h1 className="text-white text-xl font-bold">Hospital-CPM</h1>
           <button
             className="lg:hidden p-2 rounded-md text-red-200 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
             onClick={() => setSidebarOpen(false)}

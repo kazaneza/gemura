@@ -14,7 +14,7 @@ import IndirectCosts from './pages/IndirectCosts';
 import DailyReport from './pages/reports/DailyReport';
 import WeeklyReport from './pages/reports/WeeklyReport';
 import MonthlyReport from './pages/reports/MonthlyReport';
-import Schools from './pages/settings/Schools';
+import Hospitals from './pages/settings/Hospitals';
 import Ingredients from './pages/settings/Ingredients';
 import UserManagement from './pages/admin/UserManagement';
 
@@ -76,9 +76,9 @@ const AppContent: React.FC = () => {
             <MonthlyReport />
           </ProtectedRoute>
         } />
-        <Route path="/settings/schools" element={
-          <ProtectedRoute route="/settings/schools">
-            <Schools />
+        <Route path="/settings/hospitals" element={
+          <ProtectedRoute route="/settings/hospitals">
+            <Hospitals />
           </ProtectedRoute>
         } />
         <Route path="/settings/ingredients" element={

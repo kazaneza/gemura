@@ -7,7 +7,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
     { resource: 'production', actions: ['create', 'read', 'update', 'delete'] },
     { resource: 'indirect-costs', actions: ['create', 'read', 'update', 'delete'] },
     { resource: 'reports', actions: ['read', 'export'] },
-    { resource: 'schools', actions: ['create', 'read', 'update', 'delete'] },
+    { resource: 'hospitals', actions: ['create', 'read', 'update', 'delete'] },
     { resource: 'ingredients', actions: ['create', 'read', 'update', 'delete'] },
     { resource: 'users', actions: ['create', 'read', 'update', 'delete'] },
     { resource: 'historical-data', actions: ['read', 'update'] },
@@ -17,12 +17,12 @@ export const ROLE_PERMISSIONS: RolePermissions = {
     { resource: 'purchases', actions: ['create', 'read', 'update'] },
     { resource: 'production', actions: ['create', 'read', 'update'] },
     { resource: 'reports', actions: ['read', 'export'] },
-    { resource: 'schools', actions: ['read'] },
-    { resource: 'ingredients', actions: ['create', 'read', 'update'] } // Added ingredient management for data entry
+    { resource: 'hospitals', actions: ['read'] },
+    { resource: 'ingredients', actions: ['create', 'read', 'update'] }
   ],
   VIEWER: [
     { resource: 'reports', actions: ['read', 'export'] },
-    { resource: 'schools', actions: ['read'] },
+    { resource: 'hospitals', actions: ['read'] },
     { resource: 'ingredients', actions: ['read'] }
   ]
 };
@@ -54,7 +54,7 @@ export const canAccessRoute = (userRole: UserRole, route: string): boolean => {
     '/reports/daily': { resource: 'reports', action: 'read' },
     '/reports/weekly': { resource: 'reports', action: 'read' },
     '/reports/monthly': { resource: 'reports', action: 'read' },
-    '/settings/schools': { resource: 'schools', action: 'update' },
+    '/settings/hospitals': { resource: 'hospitals', action: 'update' },
     '/settings/ingredients': { resource: 'ingredients', action: 'update' },
     '/admin/users': { resource: 'users', action: 'read' }
   };

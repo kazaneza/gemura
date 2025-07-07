@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
 from app.database import get_session
-from app.models import Production, ProductionCreate, ProductionUpdate, ProductionRead, User, UserRole, School, Week
+from app.models import Production, ProductionCreate, ProductionUpdate, ProductionRead, User, UserRole, Hospital, Week, MealService
 from app.auth import get_current_active_user, require_role
 
 router = APIRouter()
@@ -11,7 +11,8 @@ router = APIRouter()
 @router.get("/", response_model=List[ProductionRead])
 async def get_productions(
     week_id: Optional[str] = Query(None),
-    school_id: Optional[str] = Query(None),
+    hospital_id: Optional[str] = Query(None),
+    service: Optional[MealService] = Query(None),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_active_user),
@@ -21,8 +22,10 @@ async def get_productions(
     
     if week_id:
         statement = statement.where(Production.weekId == week_id)
-    if school_id:
-        statement = statement.where(Production.schoolId == school_id)
+    if hospital_id:
+        statement = statement.where(Production.hospitalId == hospital_id)
+    if service:
+        statement = statement.where(Production.service == service)
     if start_date and end_date:
         statement = statement.where(
             Production.productionDate >= start_date,
@@ -53,12 +56,12 @@ async def create_production(
     current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.DATA_ENTRY])),
     session: Session = Depends(get_session)
 ):
-    # Verify school exists
-    school = session.get(School, production_data.schoolId)
-    if not school:
+    # Verify hospital exists
+    hospital = session.get(Hospital, production_data.hospitalId)
+    if not hospital:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found"
+            detail="Hospital not found"
         )
     
     # Create or get week record based on production date
@@ -94,15 +97,10 @@ async def create_production(
     # Create production
     production = Production(
         weekId=week.id,
-        schoolId=production_data.schoolId,
+        hospitalId=production_data.hospitalId,
+        service=production_data.service,
         productionDate=production_data.productionDate,
-        starchKg=production_data.starchKg,
-        vegetablesKg=production_data.vegetablesKg,
-        totalKg=production_data.totalKg,
-        starchPortionPerKg=production_data.starchPortionPerKg,
-        vegPortionPerKg=production_data.vegPortionPerKg,
-        beneficiaries=production_data.beneficiaries,
-        mealsCalculated=production_data.mealsCalculated,
+        patientsServed=production_data.patientsServed,
         createdBy=current_user.id
     )
     
@@ -110,7 +108,7 @@ async def create_production(
     session.commit()
     session.refresh(production)
     
-    print(f"✅ Created production: {production_data.mealsCalculated} meals for {school.name} on {production_date.date()}")
+    print(f"✅ Created production: {production_data.patientsServed} patients for {hospital.name} - {production_data.service.value} on {production_date.date()}")
     
     return production
 

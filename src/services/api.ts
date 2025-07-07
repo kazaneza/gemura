@@ -85,30 +85,30 @@ export const usersAPI = {
   },
 };
 
-// Schools API
-export const schoolsAPI = {
-  getSchools: async () => {
-    const response = await api.get('/schools/');
+// Hospitals API (renamed from Schools)
+export const hospitalsAPI = {
+  getHospitals: async () => {
+    const response = await api.get('/hospitals/');
     return response.data;
   },
   
-  getSchool: async (schoolId: string) => {
-    const response = await api.get(`/schools/${schoolId}`);
+  getHospital: async (hospitalId: string) => {
+    const response = await api.get(`/hospitals/${hospitalId}`);
     return response.data;
   },
   
-  createSchool: async (schoolData: any) => {
-    const response = await api.post('/schools/', schoolData);
+  createHospital: async (hospitalData: any) => {
+    const response = await api.post('/hospitals/', hospitalData);
     return response.data;
   },
   
-  updateSchool: async (schoolId: string, data: any) => {
-    const response = await api.put(`/schools/${schoolId}`, data);
+  updateHospital: async (hospitalId: string, data: any) => {
+    const response = await api.put(`/hospitals/${hospitalId}`, data);
     return response.data;
   },
   
-  deleteSchool: async (schoolId: string) => {
-    const response = await api.delete(`/schools/${schoolId}`);
+  deleteHospital: async (hospitalId: string) => {
+    const response = await api.delete(`/hospitals/${hospitalId}`);
     return response.data;
   },
 };
@@ -141,9 +141,9 @@ export const ingredientsAPI = {
   },
 };
 
-// Purchases API
+// Purchases API (now with service parameter)
 export const purchasesAPI = {
-  getPurchases: async (params?: { week_id?: string; start_date?: string; end_date?: string }) => {
+  getPurchases: async (params?: { week_id?: string; service?: string; start_date?: string; end_date?: string }) => {
     const response = await api.get('/purchases/', { params });
     return response.data;
   },
@@ -169,9 +169,9 @@ export const purchasesAPI = {
   },
 };
 
-// Production API
+// Production API (now with hospital and service parameters)
 export const productionAPI = {
-  getProductions: async (params?: { week_id?: string; school_id?: string; start_date?: string; end_date?: string }) => {
+  getProductions: async (params?: { week_id?: string; hospital_id?: string; service?: string; start_date?: string; end_date?: string }) => {
     const response = await api.get('/production/', { params });
     return response.data;
   },

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
 from app.database import get_session
-from app.models import Purchase, PurchaseCreate, PurchaseUpdate, PurchaseRead, User, UserRole, Ingredient, Week
+from app.models import Purchase, PurchaseCreate, PurchaseUpdate, PurchaseRead, User, UserRole, Ingredient, Week, MealService
 from app.auth import get_current_active_user, require_role
 
 router = APIRouter()
@@ -11,6 +11,7 @@ router = APIRouter()
 @router.get("/", response_model=List[PurchaseRead])
 async def get_purchases(
     week_id: Optional[str] = Query(None),
+    service: Optional[MealService] = Query(None),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_active_user),
@@ -20,6 +21,8 @@ async def get_purchases(
     
     if week_id:
         statement = statement.where(Purchase.weekId == week_id)
+    if service:
+        statement = statement.where(Purchase.service == service)
     if start_date and end_date:
         statement = statement.where(
             Purchase.purchaseDate >= start_date,
@@ -92,6 +95,7 @@ async def create_purchase(
     purchase = Purchase(
         weekId=week.id,
         ingredientId=purchase_data.ingredientId,
+        service=purchase_data.service,
         purchaseDate=purchase_data.purchaseDate,
         quantity=purchase_data.quantity,
         unitPrice=purchase_data.unitPrice,
@@ -109,7 +113,7 @@ async def create_purchase(
     session.add(ingredient)
     session.commit()
     
-    print(f"✅ Created purchase: {purchase_data.quantity} {ingredient.unit} of {ingredient.name} on {purchase_date.date()}")
+    print(f"✅ Created purchase: {purchase_data.quantity} {ingredient.unit} of {ingredient.name} for {purchase_data.service.value} on {purchase_date.date()}")
     
     return purchase
 

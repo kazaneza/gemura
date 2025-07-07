@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.routers import auth, users, schools, ingredients, purchases, production, weeks, indirect_costs, reports
+from app.routers import auth, users, hospitals, ingredients, purchases, production, weeks, indirect_costs, reports
 from app.database import connect_db, disconnect_db
 
 @asynccontextmanager
@@ -14,8 +14,8 @@ async def lifespan(app: FastAPI):
     await disconnect_db()
 
 app = FastAPI(
-    title="Kitchen Manager API",
-    description="API for Kitchen Management System",
+    title="Hospital Kitchen Manager API",
+    description="API for Hospital Kitchen Management System",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -38,7 +38,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
-app.include_router(schools.router, prefix="/api/schools", tags=["Schools"])
+app.include_router(hospitals.router, prefix="/api/hospitals", tags=["Hospitals"])
 app.include_router(ingredients.router, prefix="/api/ingredients", tags=["Ingredients"])
 app.include_router(purchases.router, prefix="/api/purchases", tags=["Purchases"])
 app.include_router(production.router, prefix="/api/production", tags=["Production"])
@@ -48,7 +48,7 @@ app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 
 @app.get("/")
 async def root():
-    return {"message": "Kitchen Manager API"}
+    return {"message": "Hospital Kitchen Manager API"}
 
 @app.get("/health")
 async def health_check():

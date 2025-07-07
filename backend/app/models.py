@@ -20,6 +20,11 @@ class WeekStatus(str, Enum):
     COMPLETED = "COMPLETED"
     LOCKED = "LOCKED"
 
+class MealService(str, Enum):
+    BREAKFAST = "BREAKFAST"
+    LUNCH = "LUNCH"
+    DINNER = "DINNER"
+
 # Base Models
 class UserBase(SQLModel):
     email: str = Field(unique=True, index=True)
@@ -58,35 +63,35 @@ class UserRead(UserBase):
     createdAt: datetime
     updatedAt: datetime
 
-# School Models
-class SchoolBase(SQLModel):
+# Hospital Models (renamed from School)
+class HospitalBase(SQLModel):
     name: str
     location: str
-    students: int = 0
+    beds: int = 0  # Changed from students to beds
     contact: Optional[str] = None
     active: bool = True
 
-class School(SchoolBase, table=True):
-    __tablename__ = "schools"
+class Hospital(HospitalBase, table=True):
+    __tablename__ = "hospitals"
     
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-    productions: List["Production"] = Relationship(back_populates="school")
+    productions: List["Production"] = Relationship(back_populates="hospital")
 
-class SchoolCreate(SchoolBase):
+class HospitalCreate(HospitalBase):
     pass
 
-class SchoolUpdate(SQLModel):
+class HospitalUpdate(SQLModel):
     name: Optional[str] = None
     location: Optional[str] = None
-    students: Optional[int] = None
+    beds: Optional[int] = None
     contact: Optional[str] = None
     active: Optional[bool] = None
 
-class SchoolRead(SchoolBase):
+class HospitalRead(HospitalBase):
     id: str
     createdAt: datetime
     updatedAt: datetime
@@ -120,7 +125,7 @@ class IngredientRead(IngredientBase):
     createdAt: datetime
     updatedAt: datetime
 
-# Week Models (moved before Purchase to avoid forward reference issues)
+# Week Models
 class WeekBase(SQLModel):
     month: int
     year: int
@@ -161,10 +166,11 @@ class WeekRead(WeekBase):
     createdAt: datetime
     updatedAt: datetime
 
-# Purchase Models
+# Purchase Models (now service-based)
 class PurchaseBase(SQLModel):
     weekId: str = Field(foreign_key="weeks.id")
     ingredientId: str = Field(foreign_key="ingredients.id")
+    service: MealService  # NEW: breakfast, lunch, or dinner
     purchaseDate: datetime
     quantity: float
     unitPrice: float
@@ -187,6 +193,7 @@ class PurchaseCreate(PurchaseBase):
     pass
 
 class PurchaseUpdate(SQLModel):
+    service: Optional[MealService] = None
     quantity: Optional[float] = None
     unitPrice: Optional[float] = None
     totalPrice: Optional[float] = None
@@ -198,18 +205,14 @@ class PurchaseRead(PurchaseBase):
     updatedAt: datetime
     ingredient: Optional[IngredientRead] = None
 
-# Production Models
+# Production Models (now hospital and service-based)
 class ProductionBase(SQLModel):
     weekId: str = Field(foreign_key="weeks.id")
-    schoolId: str = Field(foreign_key="schools.id")
+    hospitalId: str = Field(foreign_key="hospitals.id")  # Changed from schoolId
+    service: MealService  # NEW: breakfast, lunch, or dinner
     productionDate: datetime
-    starchKg: float
-    vegetablesKg: float
-    totalKg: float
-    starchPortionPerKg: float
-    vegPortionPerKg: float
-    beneficiaries: int
-    mealsCalculated: int = 0
+    patientsServed: int  # Changed from beneficiaries to patientsServed
+    # Removed starch/vegetable tracking as it's now consolidated at service level
 
 class Production(ProductionBase, table=True):
     __tablename__ = "productions"
@@ -220,7 +223,7 @@ class Production(ProductionBase, table=True):
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-    school: Optional[School] = Relationship(back_populates="productions")
+    hospital: Optional[Hospital] = Relationship(back_populates="productions")
     user: Optional[User] = Relationship(back_populates="productions")
     week: Optional[Week] = Relationship(back_populates="productions")
 
@@ -228,22 +231,17 @@ class ProductionCreate(ProductionBase):
     pass
 
 class ProductionUpdate(SQLModel):
-    starchKg: Optional[float] = None
-    vegetablesKg: Optional[float] = None
-    totalKg: Optional[float] = None
-    starchPortionPerKg: Optional[float] = None
-    vegPortionPerKg: Optional[float] = None
-    beneficiaries: Optional[int] = None
-    mealsCalculated: Optional[int] = None
+    service: Optional[MealService] = None
+    patientsServed: Optional[int] = None
 
 class ProductionRead(ProductionBase):
     id: str
     createdBy: str
     createdAt: datetime
     updatedAt: datetime
-    school: Optional[SchoolRead] = None
+    hospital: Optional[HospitalRead] = None
 
-# Indirect Cost Models
+# Indirect Cost Models (unchanged)
 class IndirectCostBase(SQLModel):
     month: int
     year: int
@@ -278,7 +276,7 @@ class IndirectCostRead(IndirectCostBase):
     createdAt: datetime
     updatedAt: datetime
 
-# Monthly Summary Models
+# Monthly Summary Models (unchanged)
 class MonthlySummaryBase(SQLModel):
     month: int
     year: int
@@ -308,7 +306,7 @@ class MonthlySummaryRead(MonthlySummaryBase):
     createdAt: datetime
     updatedAt: datetime
 
-# Auth Models
+# Auth Models (unchanged)
 class Token(SQLModel):
     access_token: str
     token_type: str
@@ -333,3 +331,12 @@ class IndirectCostBreakdown(SQLModel):
     totalMeals: int
     costPerMeal: float
     details: List[IndirectCostDetail]
+
+# Service Summary Models (NEW)
+class ServiceSummary(SQLModel):
+    service: MealService
+    totalIngredientCost: float
+    totalPatientsServed: int
+    costPerMeal: float
+    overheadPerMeal: float
+    totalCPM: float
