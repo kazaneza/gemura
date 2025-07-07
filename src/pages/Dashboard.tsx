@@ -17,6 +17,10 @@ interface DashboardData {
   currentWeekCPM: number;
   monthToDateAvgCPM: number;
   schoolsContribution: Array<{
+    name: string;
+    meals: number;
+    percentage: number;
+  }>;
   hospitalsContribution: Array<{
     name: string;
     meals: number;
@@ -38,6 +42,7 @@ const Dashboard: React.FC = () => {
     weekToDateMeals: 0,
     currentWeekCPM: 0,
     monthToDateAvgCPM: 0,
+    schoolsContribution: [],
     hospitalsContribution: [],
     sevenDayTrend: [],
     monthCPMTrend: []
@@ -213,6 +218,7 @@ const Dashboard: React.FC = () => {
         });
         
         const weekCostTrend = weekPurchasesTrend.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+        const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
         
         const weekCPMTrend = weekMealsTrend > 0 ? 
           (weekCostTrend / weekMealsTrend) * (1 + overheadPercentage / 100) : 0;
@@ -229,6 +235,7 @@ const Dashboard: React.FC = () => {
         weekToDateMeals,
         currentWeekCPM: Math.round(currentWeekCPM),
         monthToDateAvgCPM: Math.round(monthToDateAvgCPM),
+        schoolsContribution: [],
         hospitalsContribution,
         sevenDayTrend,
         monthCPMTrend
