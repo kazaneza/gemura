@@ -4,8 +4,7 @@ import {
   Menu,
   X,
   Home,
-  ShoppingCart,
-  Factory,
+  Utensils,
   DollarSign,
   FileText,
   Settings,
@@ -47,30 +46,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
     {
       name: 'Data Entry',
-      icon: ShoppingCart,
-      current: location.pathname.startsWith('/daily') || location.pathname.startsWith('/purchases') || location.pathname.startsWith('/production') || location.pathname.startsWith('/indirect-costs'),
-      show: canAccessRoute(user.role, '/purchases') || canAccessRoute(user.role, '/production') || canAccessRoute(user.role, '/indirect-costs'),
+      icon: Utensils,
+      current: location.pathname.startsWith('/daily') || location.pathname.startsWith('/indirect-costs'),
+      show: canAccessRoute(user.role, '/daily') || canAccessRoute(user.role, '/indirect-costs'),
       children: [
         { 
-          name: 'Daily Entry', 
+          name: 'Meal Service Entry', 
           href: '/daily', 
           icon: Calendar, 
           current: location.pathname === '/daily',
-          show: canAccessRoute(user.role, '/purchases') && canAccessRoute(user.role, '/production')
-        },
-        { 
-          name: 'Purchase Entry', 
-          href: '/purchases', 
-          icon: ShoppingCart, 
-          current: location.pathname === '/purchases',
-          show: canAccessRoute(user.role, '/purchases')
-        },
-        { 
-          name: 'Production Entry', 
-          href: '/production', 
-          icon: Factory, 
-          current: location.pathname === '/production',
-          show: canAccessRoute(user.role, '/production')
+          show: canAccessRoute(user.role, '/daily')
         },
         { 
           name: 'Indirect Costs', 

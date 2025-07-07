@@ -8,8 +8,6 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserProfile from './components/auth/UserProfile';
 import Dashboard from './pages/Dashboard';
 import DailyEntry from './pages/DailyEntry';
-import PurchaseEntry from './pages/PurchaseEntry';
-import ProductionEntry from './pages/ProductionEntry';
 import IndirectCosts from './pages/IndirectCosts';
 import DailyReport from './pages/reports/DailyReport';
 import WeeklyReport from './pages/reports/WeeklyReport';
@@ -44,16 +42,6 @@ const AppContent: React.FC = () => {
         <Route path="/daily" element={
           <ProtectedRoute route="/daily">
             <DailyEntry />
-          </ProtectedRoute>
-        } />
-        <Route path="/purchases" element={
-          <ProtectedRoute route="/purchases">
-            <PurchaseEntry />
-          </ProtectedRoute>
-        } />
-        <Route path="/production" element={
-          <ProtectedRoute route="/production">
-            <ProductionEntry />
           </ProtectedRoute>
         } />
         <Route path="/indirect-costs" element={
