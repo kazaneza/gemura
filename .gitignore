@@ -1,0 +1,33 @@
+# Node modules
+node_modules/
+
+# Python virtual environments
+myenv/
+.env
+*.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Output and logs
+nohup.out
+*.log
+
+# Prisma
+prisma/migrations/
+.prisma/
+
+# Railway
+.railwayignore
+
+# Local development files
+.vscode/
+.DS_Store
+
+# Build artifacts (if any)
+dist/
+build/
+
+# System files
+Thumbs.db

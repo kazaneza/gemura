@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Print styles for reports */
+@media print {
+  /* Hide non-essential elements when printing */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure proper page layout */
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+  
+  /* Reset colors for print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important; /* <-- Replace color-adjust with print-color-adjust */
+  }
+  
+  /* Ensure tables break properly */
+  table {
+    page-break-inside: auto;
+  }
+  
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  tfoot {
+    display: table-footer-group;
+  }
+  
+  /* Ensure proper spacing */
+  .print-section {
+    page-break-after: auto;
+    margin-bottom: 20px;
+  }
+  
+  /* Hide interactive elements */
+  button, .hover\:bg-gray-50, .hover\:shadow-md {
+    display: none !important;
+  }
+  
+  /* Ensure proper text sizing */
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  h1 { font-size: 18pt; }
+  h2 { font-size: 16pt; }
+  h3 { font-size: 14pt; }
+  
+  /* Ensure borders are visible */
+  .border, .border-gray-200, .border-gray-300 {
+    border: 1px solid #000 !important;
+  }
+  
+  /* Make sure background colors show */
+  .bg-gray-50, .bg-blue-50, .bg-green-50 {
+    background-color: #f9f9f9 !important;
+  }
+}

@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./kitchen_manager.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(VIEWER)
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  purchases     Purchase[]
+  productions   Production[]
+  indirectCosts IndirectCost[]
+
+  @@map("users")
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  location  String
+  students  Int      @default(0)
+  contact   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productions Production[]
+
+  @@map("schools")
+}
+
+model Ingredient {
+  id        String           @id @default(cuid())
+  name      String
+  unit      IngredientUnit
+  lastPrice Float            @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  purchases Purchase[]
+
+  @@map("ingredients")
+}
+
+model Purchase {
+  id           String   @id @default(cuid())
+  weekId       String
+  ingredientId String
+  purchaseDate DateTime
+  quantity     Float
+  unitPrice    Float
+  totalPrice   Float
+  createdBy    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [createdBy], references: [id])
+  week       Week       @relation(fields: [weekId], references: [id])
+
+  @@index([weekId])
+  @@index([ingredientId])
+  @@index([purchaseDate])
+  @@index([createdBy])
+  @@map("purchases")
+}
+
+model Production {
+  id                   String   @id @default(cuid())
+  weekId               String
+  schoolId             String
+  productionDate       DateTime
+  starchKg             Float
+  vegetablesKg         Float
+  totalKg              Float
+  starchPortionPerKg   Float
+  vegPortionPerKg      Float
+  beneficiaries        Int
+  mealsCalculated      Int      @default(0)
+  createdBy            String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [createdBy], references: [id])
+  week   Week   @relation(fields: [weekId], references: [id])
+
+  @@index([weekId])
+  @@index([schoolId])
+  @@index([productionDate])
+  @@index([createdBy])
+  @@map("productions")
+}
+
+model Week {
+  id             String   @id @default(cuid())
+  month          Int
+  year           Int
+  weekNumber     Int
+  startDate      DateTime
+  endDate        DateTime
+  mealsServed    Int      @default(0)
+  ingredientCost Float    @default(0)
+  costPerMeal    Float    @default(0)
+  overheadPerMeal Float   @default(0)
+  totalCPM       Float    @default(0)
+  status         WeekStatus @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  purchases   Purchase[]
+  productions Production[]
+
+  @@unique([year, weekNumber])
+  @@index([month, year])
+  @@index([startDate, endDate])
+  @@map("weeks")
+}
+
+model IndirectCost {
+  id          String   @id @default(cuid())
+  month       Int
+  year        Int
+  category    String
+  description String
+  amount      Float
+  code        String?  // Added code field for categorization (e.g., "5117", "5215")
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [createdBy], references: [id])
+
+  @@index([month, year])
+  @@index([category])
+  @@index([code])
+  @@index([createdBy])
+  @@map("indirect_costs")
+}
+
+model MonthlySummary {
+  id                  String   @id @default(cuid())
+  month               Int
+  year                Int
+  totalIndirectCosts  Float    @default(0)
+  totalMealsProduced  Int      @default(0)
+  overheadPerMeal     Float    @default(0)
+  averageCPM          Float    @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([month, year])
+  @@index([month, year])
+  @@map("monthly_summaries")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  DATA_ENTRY
+  VIEWER
+}
+
+enum IngredientUnit {
+  KG
+  LTR
+  PCS
+}
+
+enum WeekStatus {
+  ACTIVE
+  COMPLETED
+  LOCKED
+}
