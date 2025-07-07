@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Check, X, Calendar, AlertCircle, Calculator, Edit2, Eye, Trash2 } from 'lucide-react';
+import { Save, Check, X, Calendar, AlertCircle, Calculator, Edit2, Eye, Trash2, Coffee, Utensils, Moon } from 'lucide-react';
 import { hospitalsAPI, ingredientsAPI, purchasesAPI, productionAPI } from '../services/api';
+
+enum MealService {
+  BREAKFAST = "BREAKFAST",
+  LUNCH = "LUNCH",
+  DINNER = "DINNER"
+}
 
 interface Ingredient {
   id: string;
@@ -13,7 +19,7 @@ interface Hospital {
   id: string;
   name: string;
   location: string;
-  patients: number;
+  beds: number;
   active: boolean;
 }
 
@@ -21,6 +27,7 @@ interface IngredientEntry {
   id: string;
   ingredientId: string;
   ingredientName: string;
+  service: MealService;
   unit: string;
   quantity: number;
   unitPrice: number;
@@ -31,12 +38,8 @@ interface HospitalEntry {
   id: string;
   hospitalId: string;
   hospitalName: string;
-  starch: number;
-  veg: number;
-  total: number;
-  starchPort: number;
-  vegPort: number;
-  pax: number;
+  service: MealService;
+  patientsServed: number;
 }
 
 interface ExistingEntry {
@@ -54,10 +57,21 @@ const DailyEntry: React.FC = () => {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedService, setSelectedService] = useState<MealService>(MealService.BREAKFAST);
   const [overheadPercentage, setOverheadPercentage] = useState(15);
   
-  const [ingredientEntries, setIngredientEntries] = useState<{ [key: string]: IngredientEntry }>({});
-  const [hospitalEntries, setHospitalEntries] = useState<{ [key: string]: HospitalEntry }>({});
+  // Changed to store entries by service
+  const [ingredientEntries, setIngredientEntries] = useState<{ [service: string]: { [key: string]: IngredientEntry } }>({
+    [MealService.BREAKFAST]: {},
+    [MealService.LUNCH]: {},
+    [MealService.DINNER]: {}
+  });
+  const [hospitalEntries, setHospitalEntries] = useState<{ [service: string]: { [key: string]: HospitalEntry } }>({
+    [MealService.BREAKFAST]: {},
+    [MealService.LUNCH]: {},
+    [MealService.DINNER]: {}
+  });
+  
   const [existingEntries, setExistingEntries] = useState<ExistingEntry[]>([]);
   const [editingDate, setEditingDate] = useState<string | null>(null);
   
@@ -76,38 +90,51 @@ const DailyEntry: React.FC = () => {
   // Initialize with one empty item
   useEffect(() => {
     if (ingredients.length > 0) {
-      const initialIngredientEntries: { [key: string]: IngredientEntry } = {};
-      ingredients.forEach(ingredient => {
-        initialIngredientEntries[ingredient.id] = {
-          id: ingredient.id,
-          ingredientId: ingredient.id,
-          ingredientName: ingredient.name,
-          unit: ingredient.unit,
-          quantity: 0,
-          unitPrice: ingredient.lastPrice,
-          totalPrice: 0,
-        };
+      const initialIngredientEntries: { [service: string]: { [key: string]: IngredientEntry } } = {
+        [MealService.BREAKFAST]: {},
+        [MealService.LUNCH]: {},
+        [MealService.DINNER]: {}
+      };
+      
+      Object.keys(initialIngredientEntries).forEach(service => {
+        ingredients.forEach(ingredient => {
+          initialIngredientEntries[service as MealService][ingredient.id] = {
+            id: ingredient.id,
+            ingredientId: ingredient.id,
+            ingredientName: ingredient.name,
+            service: service as MealService,
+            unit: ingredient.unit,
+            quantity: 0,
+            unitPrice: ingredient.lastPrice,
+            totalPrice: 0,
+          };
+        });
       });
+      
       setIngredientEntries(initialIngredientEntries);
     }
   }, [ingredients]);
 
   useEffect(() => {
     if (hospitals.length > 0) {
-      const initialHospitalEntries: { [key: string]: HospitalEntry } = {};
-      hospitals.forEach(hospital => {
-        initialHospitalEntries[hospital.id] = {
-          id: hospital.id,
-          hospitalId: hospital.id,
-          hospitalName: hospital.name,
-          starch: 0,
-          veg: 0,
-          total: 0,
-          starchPort: 0,
-          vegPort: 0,
-          pax: 0,
-        };
+      const initialHospitalEntries: { [service: string]: { [key: string]: HospitalEntry } } = {
+        [MealService.BREAKFAST]: {},
+        [MealService.LUNCH]: {},
+        [MealService.DINNER]: {}
+      };
+      
+      Object.keys(initialHospitalEntries).forEach(service => {
+        hospitals.forEach(hospital => {
+          initialHospitalEntries[service as MealService][hospital.id] = {
+            id: hospital.id,
+            hospitalId: hospital.id,
+            hospitalName: hospital.name,
+            service: service as MealService,
+            patientsServed: 0
+          };
+        });
       });
+      
       setHospitalEntries(initialHospitalEntries);
     }
   }, [hospitals]);
@@ -184,8 +211,8 @@ const DailyEntry: React.FC = () => {
           };
         }
         entriesByDate[date].productions.push(production);
-        // Fixed: Total meals is sum of pax (beneficiaries), not mealsCalculated
-        entriesByDate[date].totalMeals += production.beneficiaries;
+        // Use patientsServed instead of beneficiaries
+        entriesByDate[date].totalMeals += production.patientsServed;
       });
 
       // Calculate metrics for each day using same logic as Daily Entry
@@ -231,39 +258,50 @@ const DailyEntry: React.FC = () => {
       ]);
 
       // Reset entries
-      const resetIngredientEntries: { [key: string]: IngredientEntry } = {};
-      ingredients.forEach(ingredient => {
-        resetIngredientEntries[ingredient.id] = {
-          id: ingredient.id,
-          ingredientId: ingredient.id,
-          ingredientName: ingredient.name,
-          unit: ingredient.unit,
-          quantity: 0,
-          unitPrice: ingredient.lastPrice,
-          totalPrice: 0,
-        };
+      const resetIngredientEntries: { [service: string]: { [key: string]: IngredientEntry } } = {
+        [MealService.BREAKFAST]: {},
+        [MealService.LUNCH]: {},
+        [MealService.DINNER]: {}
+      };
+      
+      Object.keys(resetIngredientEntries).forEach(service => {
+        ingredients.forEach(ingredient => {
+          resetIngredientEntries[service as MealService][ingredient.id] = {
+            id: ingredient.id,
+            ingredientId: ingredient.id,
+            ingredientName: ingredient.name,
+            service: service as MealService,
+            unit: ingredient.unit,
+            quantity: 0,
+            unitPrice: ingredient.lastPrice,
+            totalPrice: 0,
+          };
+        });
       });
 
-      const resetHospitalEntries: { [key: string]: HospitalEntry } = {};
-      hospitals.forEach(hospital => {
-        resetHospitalEntries[hospital.id] = {
-          id: hospital.id,
-          hospitalId: hospital.id,
-          hospitalName: hospital.name,
-          starch: 0,
-          veg: 0,
-          total: 0,
-          starchPort: 0,
-          vegPort: 0,
-          pax: 0,
-        };
+      const resetHospitalEntries: { [service: string]: { [key: string]: HospitalEntry } } = {
+        [MealService.BREAKFAST]: {},
+        [MealService.LUNCH]: {},
+        [MealService.DINNER]: {}
+      };
+      
+      Object.keys(resetHospitalEntries).forEach(service => {
+        hospitals.forEach(hospital => {
+          resetHospitalEntries[service as MealService][hospital.id] = {
+            id: hospital.id,
+            hospitalId: hospital.id,
+            hospitalName: hospital.name,
+            service: service as MealService,
+            patientsServed: 0
+          };
+        });
       });
 
       // Load purchase data
       purchases.forEach((purchase: any) => {
-        if (resetIngredientEntries[purchase.ingredientId]) {
-          resetIngredientEntries[purchase.ingredientId] = {
-            ...resetIngredientEntries[purchase.ingredientId],
+        if (purchase.service && resetIngredientEntries[purchase.service][purchase.ingredientId]) {
+          resetIngredientEntries[purchase.service][purchase.ingredientId] = {
+            ...resetIngredientEntries[purchase.service][purchase.ingredientId],
             quantity: purchase.quantity,
             unitPrice: purchase.unitPrice,
             totalPrice: purchase.totalPrice
@@ -273,15 +311,10 @@ const DailyEntry: React.FC = () => {
 
       // Load production data
       productions.forEach((production: any) => {
-        if (resetHospitalEntries[production.hospitalId]) {
-          resetHospitalEntries[production.hospitalId] = {
-            ...resetHospitalEntries[production.hospitalId],
-            starch: production.starchKg,
-            veg: production.vegetablesKg,
-            total: production.totalKg,
-            starchPort: production.starchPortionPerKg,
-            vegPort: production.vegPortionPerKg,
-            pax: production.beneficiaries
+        if (production.service && resetHospitalEntries[production.service][production.hospitalId]) {
+          resetHospitalEntries[production.service][production.hospitalId] = {
+            ...resetHospitalEntries[production.service][production.hospitalId],
+            patientsServed: production.patientsServed
           };
         }
       });
@@ -338,9 +371,9 @@ const DailyEntry: React.FC = () => {
   };
 
   // Update ingredient entry
-  const updateIngredientEntry = (ingredientId: string, field: keyof IngredientEntry, value: any) => {
+  const updateIngredientEntry = (service: MealService, ingredientId: string, field: keyof IngredientEntry, value: any) => {
     setIngredientEntries(entries => {
-      const updatedEntry = { ...entries[ingredientId], [field]: value };
+      const updatedEntry = { ...entries[service][ingredientId], [field]: value };
       
       // Auto-calculate total price
       if (field === 'quantity' || field === 'unitPrice') {
@@ -349,34 +382,35 @@ const DailyEntry: React.FC = () => {
       
       return {
         ...entries,
-        [ingredientId]: updatedEntry
+        [service]: {
+          ...entries[service],
+          [ingredientId]: updatedEntry
+        }
       };
     });
   };
 
   // Update hospital entry
-  const updateHospitalEntry = (hospitalId: string, field: keyof HospitalEntry, value: any) => {
+  const updateHospitalEntry = (service: MealService, hospitalId: string, field: keyof HospitalEntry, value: any) => {
     setHospitalEntries(entries => {
-      const updatedEntry = { ...entries[hospitalId], [field]: value };
-      
-      // Auto-calculate total
-      if (field === 'starch' || field === 'veg') {
-        updatedEntry.total = updatedEntry.starch + updatedEntry.veg;
-      }
+      const updatedEntry = { ...entries[service][hospitalId], [field]: value };
       
       return {
         ...entries,
-        [hospitalId]: updatedEntry
+        [service]: {
+          ...entries[service],
+          [hospitalId]: updatedEntry
+        }
       };
     });
   };
 
-  // Calculations - Fixed to use pax instead of mealsCalculated for total meals
+  // Calculations for the selected service
   const calculations = {
-    totalIngredientCost: Object.values(ingredientEntries).reduce((sum, entry) => sum + entry.totalPrice, 0),
-    totalPax: Object.values(hospitalEntries).reduce((sum, entry) => sum + entry.pax, 0), // This is the total meals
+    totalIngredientCost: Object.values(ingredientEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.totalPrice, 0),
+    totalPatientsServed: Object.values(hospitalEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.patientsServed, 0),
     get costPerMeal() {
-      return this.totalPax > 0 ? this.totalIngredientCost / this.totalPax : 0;
+      return this.totalPatientsServed > 0 ? this.totalIngredientCost / this.totalPatientsServed : 0;
     },
     get overhead() {
       return this.costPerMeal * (overheadPercentage / 100);
@@ -394,12 +428,12 @@ const DailyEntry: React.FC = () => {
       errors.push('Please select a date');
     }
 
-    const validIngredients = Object.values(ingredientEntries).filter(entry => 
+    const validIngredients = Object.values(ingredientEntries[selectedService] || {}).filter(entry => 
       entry.quantity > 0 && entry.unitPrice > 0
     );
     
-    const validHospitals = Object.values(hospitalEntries).filter(entry => 
-      (entry.starch > 0 || entry.veg > 0) && entry.pax > 0
+    const validHospitals = Object.values(hospitalEntries[selectedService] || {}).filter(entry => 
+      entry.patientsServed > 0
     );
 
     if (validIngredients.length === 0) {
@@ -411,7 +445,7 @@ const DailyEntry: React.FC = () => {
     }
 
     // Validate individual entries
-    Object.values(ingredientEntries).forEach((entry) => {
+    Object.values(ingredientEntries[selectedService] || {}).forEach((entry) => {
       if (entry.quantity > 0) {
         if (entry.unitPrice <= 0) {
           errors.push(`${entry.ingredientName}: Unit price must be greater than 0`);
@@ -419,17 +453,6 @@ const DailyEntry: React.FC = () => {
       }
       if (entry.quantity < 0) {
         errors.push(`${entry.ingredientName}: Quantity cannot be negative`);
-      }
-    });
-
-    Object.values(hospitalEntries).forEach((entry) => {
-      if (entry.starch > 0 || entry.veg > 0 || entry.pax > 0) {
-        if (entry.starch < 0 || entry.veg < 0) {
-          errors.push(`${entry.hospitalName}: Starch and veg cannot be negative`);
-        }
-        if ((entry.starch > 0 || entry.veg > 0) && entry.pax <= 0) {
-          errors.push(`${entry.hospitalName}: Pax must be greater than 0 when production is recorded`);
-        }
       }
     });
     
@@ -471,13 +494,14 @@ const DailyEntry: React.FC = () => {
       }
 
       // Save purchases (only for ingredients with quantity > 0)
-      const validIngredients = Object.values(ingredientEntries).filter(entry => 
+      const validIngredients = Object.values(ingredientEntries[selectedService] || {}).filter(entry => 
         entry.quantity > 0 && entry.unitPrice > 0
       );
 
       for (const ingredient of validIngredients) {
         const purchaseData = {
           ingredientId: ingredient.ingredientId,
+          service: selectedService,
           purchaseDate: new Date(selectedDate).toISOString(),
           quantity: ingredient.quantity,
           unitPrice: ingredient.unitPrice,
@@ -488,55 +512,63 @@ const DailyEntry: React.FC = () => {
       }
 
       // Save productions (only for hospitals with production data)
-      const validHospitals = Object.values(hospitalEntries).filter(entry => 
-        (entry.starch > 0 || entry.veg > 0) && entry.pax > 0
+      const validHospitals = Object.values(hospitalEntries[selectedService] || {}).filter(entry => 
+        entry.patientsServed > 0
       );
 
       for (const hospital of validHospitals) {
         const productionData = {
           hospitalId: hospital.hospitalId,
+          service: selectedService,
           productionDate: new Date(selectedDate).toISOString(),
-          starchKg: hospital.starch,
-          vegetablesKg: hospital.veg,
-          totalKg: hospital.total,
-          starchPortionPerKg: hospital.starchPort || 0,
-          vegPortionPerKg: hospital.vegPort || 0,
-          patientsServed: hospital.pax,
-          mealsCalculated: (hospital.starch * hospital.starchPort) + (hospital.veg * hospital.vegPort),
+          patientsServed: hospital.patientsServed,
           weekId: 'temp-week-id'
         };
         await productionAPI.createProduction(productionData);
       }
 
       // Reset form to zeros
-      const resetIngredientEntries: { [key: string]: IngredientEntry } = {};
-      ingredients.forEach(ingredient => {
-        resetIngredientEntries[ingredient.id] = {
-          id: ingredient.id,
-          ingredientId: ingredient.id,
-          ingredientName: ingredient.name,
-          unit: ingredient.unit,
-          quantity: 0,
-          unitPrice: ingredient.lastPrice,
-          totalPrice: 0,
-        };
+      const resetIngredientEntries: { [service: string]: { [key: string]: IngredientEntry } } = {
+        [MealService.BREAKFAST]: {},
+        [MealService.LUNCH]: {},
+        [MealService.DINNER]: {}
+      };
+      
+      Object.keys(resetIngredientEntries).forEach(service => {
+        ingredients.forEach(ingredient => {
+          resetIngredientEntries[service as MealService][ingredient.id] = {
+            id: ingredient.id,
+            ingredientId: ingredient.id,
+            ingredientName: ingredient.name,
+            service: service as MealService,
+            unit: ingredient.unit,
+            quantity: 0,
+            unitPrice: ingredient.lastPrice,
+            totalPrice: 0,
+          };
+        });
       });
+      
       setIngredientEntries(resetIngredientEntries);
 
-      const resetHospitalEntries: { [key: string]: HospitalEntry } = {};
-      hospitals.forEach(hospital => {
-        resetHospitalEntries[hospital.id] = {
-          id: hospital.id,
-          hospitalId: hospital.id,
-          hospitalName: hospital.name,
-          starch: 0,
-          veg: 0,
-          total: 0,
-          starchPort: 0,
-          vegPort: 0,
-          pax: 0,
-        };
+      const resetHospitalEntries: { [service: string]: { [key: string]: HospitalEntry } } = {
+        [MealService.BREAKFAST]: {},
+        [MealService.LUNCH]: {},
+        [MealService.DINNER]: {}
+      };
+      
+      Object.keys(resetHospitalEntries).forEach(service => {
+        hospitals.forEach(hospital => {
+          resetHospitalEntries[service as MealService][hospital.id] = {
+            id: hospital.id,
+            hospitalId: hospital.id,
+            hospitalName: hospital.name,
+            service: service as MealService,
+            patientsServed: 0
+          };
+        });
       });
+      
       setHospitalEntries(resetHospitalEntries);
 
       setValidationErrors([]);
@@ -556,35 +588,72 @@ const DailyEntry: React.FC = () => {
     setSelectedDate(new Date().toISOString().split('T')[0]);
     
     // Reset to empty form
-    const resetIngredientEntries: { [key: string]: IngredientEntry } = {};
-    ingredients.forEach(ingredient => {
-      resetIngredientEntries[ingredient.id] = {
-        id: ingredient.id,
-        ingredientId: ingredient.id,
-        ingredientName: ingredient.name,
-        unit: ingredient.unit,
-        quantity: 0,
-        unitPrice: ingredient.lastPrice,
-        totalPrice: 0,
-      };
+    const resetIngredientEntries: { [service: string]: { [key: string]: IngredientEntry } } = {
+      [MealService.BREAKFAST]: {},
+      [MealService.LUNCH]: {},
+      [MealService.DINNER]: {}
+    };
+    
+    Object.keys(resetIngredientEntries).forEach(service => {
+      ingredients.forEach(ingredient => {
+        resetIngredientEntries[service as MealService][ingredient.id] = {
+          id: ingredient.id,
+          ingredientId: ingredient.id,
+          ingredientName: ingredient.name,
+          service: service as MealService,
+          unit: ingredient.unit,
+          quantity: 0,
+          unitPrice: ingredient.lastPrice,
+          totalPrice: 0,
+        };
+      });
     });
+    
     setIngredientEntries(resetIngredientEntries);
 
-    const resetHospitalEntries: { [key: string]: HospitalEntry } = {};
-    hospitals.forEach(hospital => {
-      resetHospitalEntries[hospital.id] = {
-        id: hospital.id,
-        hospitalId: hospital.id,
-        hospitalName: hospital.name,
-        starch: 0,
-        veg: 0,
-        total: 0,
-        starchPort: 0,
-        vegPort: 0,
-        pax: 0,
-      };
+    const resetHospitalEntries: { [service: string]: { [key: string]: HospitalEntry } } = {
+      [MealService.BREAKFAST]: {},
+      [MealService.LUNCH]: {},
+      [MealService.DINNER]: {}
+    };
+    
+    Object.keys(resetHospitalEntries).forEach(service => {
+      hospitals.forEach(hospital => {
+        resetHospitalEntries[service as MealService][hospital.id] = {
+          id: hospital.id,
+          hospitalId: hospital.id,
+          hospitalName: hospital.name,
+          service: service as MealService,
+          patientsServed: 0
+        };
+      });
     });
+    
     setHospitalEntries(resetHospitalEntries);
+  };
+
+  // Get service icon
+  const getServiceIcon = (service: MealService) => {
+    switch (service) {
+      case MealService.BREAKFAST:
+        return <Coffee className="h-5 w-5" />;
+      case MealService.LUNCH:
+        return <Utensils className="h-5 w-5" />;
+      case MealService.DINNER:
+        return <Moon className="h-5 w-5" />;
+    }
+  };
+
+  // Get service display name
+  const getServiceName = (service: MealService) => {
+    switch (service) {
+      case MealService.BREAKFAST:
+        return "Breakfast";
+      case MealService.LUNCH:
+        return "Lunch";
+      case MealService.DINNER:
+        return "Dinner";
+    }
   };
 
   return (
@@ -592,10 +661,10 @@ const DailyEntry: React.FC = () => {
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Daily Entry {editingDate && <span className="text-red-600">- Editing {new Date(editingDate).toLocaleDateString()}</span>}
+            Meal Service Entry {editingDate && <span className="text-red-600">- Editing {new Date(editingDate).toLocaleDateString()}</span>}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Fill in the quantities for ingredients used and production data for hospitals served today
+            Fill in the quantities for ingredients used and patients served per hospital for each meal service
           </p>
         </div>
         {editingDate && (
@@ -652,7 +721,7 @@ const DailyEntry: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Recent Daily Entries (Last 7 Days)</h3>
+            <h3 className="text-lg font-medium text-gray-900">Recent Meal Service Entries (Last 7 Days)</h3>
             <button
               onClick={() => setShowExistingEntries(!showExistingEntries)}
               className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -738,22 +807,45 @@ const DailyEntry: React.FC = () => {
       </div>
 
       {/* Date Selection */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 space-y-4">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
             <Calendar className="h-5 w-5 mr-2 text-red-600" />
-            Entry Date
+            Entry Date & Service
           </h3>
         </div>
         <div className="p-6">
-          <div className="max-w-md">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Date</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Date</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Meal Service</label>
+              <div className="flex space-x-2">
+                {Object.values(MealService).map(service => (
+                  <button
+                    key={service}
+                    type="button"
+                    onClick={() => setSelectedService(service)}
+                    className={`flex-1 flex items-center justify-center px-4 py-2 border ${
+                      selectedService === service 
+                        ? 'border-red-500 bg-red-50 text-red-700' 
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-red-500`}
+                  >
+                    {getServiceIcon(service)}
+                    <span className="ml-2">{getServiceName(service)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -761,8 +853,12 @@ const DailyEntry: React.FC = () => {
       {/* Ingredients Form */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Ingredients Purchased Today</h3>
-          <p className="text-sm text-gray-500 mt-1">Fill in quantities for ingredients used today. Leave empty if not used.</p>
+          <h3 className="text-lg font-medium text-gray-900">
+            Ingredients for {getServiceName(selectedService)} Service
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Fill in quantities for ingredients used for {getServiceName(selectedService).toLowerCase()} service. Leave empty if not used.
+          </p>
         </div>
         <div className="p-6">
           <div className="overflow-x-auto">
@@ -778,7 +874,7 @@ const DailyEntry: React.FC = () => {
               </thead>
               <tbody>
                 {ingredients.map((ingredient) => {
-                  const entry = ingredientEntries[ingredient.id];
+                  const entry = ingredientEntries[selectedService]?.[ingredient.id];
                   if (!entry) return null;
                   
                   return (
@@ -795,7 +891,7 @@ const DailyEntry: React.FC = () => {
                           min="0"
                           step="0.1"
                           value={entry.quantity || ''}
-                          onChange={(e) => updateIngredientEntry(ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => updateIngredientEntry(selectedService, ingredient.id, 'quantity', parseFloat(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="0"
                         />
@@ -806,7 +902,7 @@ const DailyEntry: React.FC = () => {
                           min="0"
                           step="1"
                           value={entry.unitPrice || ''}
-                          onChange={(e) => updateIngredientEntry(ingredient.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => updateIngredientEntry(selectedService, ingredient.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="0"
                         />
@@ -829,102 +925,51 @@ const DailyEntry: React.FC = () => {
         </div>
       </div>
 
-      {/* Hospitals Production Form */}
+      {/* Hospitals Patient Count Form */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Food Production by Hospital</h3>
-          <p className="text-sm text-gray-500 mt-1">Fill in production data for hospitals served today. Leave empty if not served.</p>
+          <h3 className="text-lg font-medium text-gray-900">
+            Patients Served for {getServiceName(selectedService)}
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Enter the number of patients served at each hospital for {getServiceName(selectedService).toLowerCase()} service.
+          </p>
         </div>
         <div className="p-6">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Cooked Food</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Unit</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Starch</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Veg</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Starch/Port</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Veg/Port</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Pax</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Hospital</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Location</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Total Beds</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Patients Served</th>
                 </tr>
               </thead>
               <tbody>
                 {hospitals.map((hospital) => {
-                  const entry = hospitalEntries[hospital.id];
+                  const entry = hospitalEntries[selectedService]?.[hospital.id];
                   if (!entry) return null;
                   
-                  const hasData = entry.starch > 0 || entry.veg > 0 || entry.pax > 0;
+                  const hasData = entry.patientsServed > 0;
                   
                   return (
                     <tr key={hospital.id} className={`border-b border-gray-100 ${hasData ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}>
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-900">{hospital.name}</div>
-                        <div className="text-xs text-gray-500">{hospital.location}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-gray-600">KG</div>
+                        <div className="text-gray-600">{hospital.location}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={entry.starch || ''}
-                          onChange={(e) => updateHospitalEntry(hospital.id, 'starch', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                          placeholder="0"
-                        />
+                        <div className="text-gray-600">{hospital.beds}</div>
                       </td>
                       <td className="py-3 px-4">
                         <input
                           type="number"
                           min="0"
-                          step="0.1"
-                          value={entry.veg || ''}
-                          onChange={(e) => updateHospitalEntry(hospital.id, 'veg', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                          placeholder="0"
-                        />
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className={`px-3 py-2 rounded-md font-medium ${
-                          entry.total > 0 
-                            ? 'bg-gray-100 border border-gray-300 text-gray-900' 
-                            : 'bg-gray-50 border border-gray-200 text-gray-600'
-                        }`}>
-                          {entry.total.toFixed(1)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={entry.starchPort || ''}
-                          onChange={(e) => updateHospitalEntry(hospital.id, 'starchPort', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                          placeholder="0"
-                        />
-                      </td>
-                      <td className="py-3 px-4">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.1"
-                          value={entry.vegPort || ''}
-                          onChange={(e) => updateHospitalEntry(hospital.id, 'vegPort', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                          placeholder="0"
-                        />
-                      </td>
-                      <td className="py-3 px-4">
-                        <input
-                          type="number"
-                          min="0"
-                          value={entry.pax || ''}
-                          onChange={(e) => updateHospitalEntry(hospital.id, 'pax', parseInt(e.target.value) || 0)}
+                          value={entry.patientsServed || ''}
+                          onChange={(e) => updateHospitalEntry(selectedService, hospital.id, 'patientsServed', parseInt(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="0"
                         />
@@ -943,13 +988,13 @@ const DailyEntry: React.FC = () => {
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
             <Calculator className="h-5 w-5 mr-2 text-red-600" />
-            Daily Cost Analysis
+            {getServiceName(selectedService)} Service Cost Analysis
           </h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-sm text-blue-600 font-medium">Daily Ingredient Cost</div>
+              <div className="text-sm text-blue-600 font-medium">{getServiceName(selectedService)} Ingredient Cost</div>
               <div className="text-2xl font-bold text-blue-900">
                 RWF {calculations.totalIngredientCost.toLocaleString()}
               </div>
@@ -961,7 +1006,7 @@ const DailyEntry: React.FC = () => {
                 RWF {Math.round(calculations.costPerMeal).toLocaleString()}
               </div>
               <div className="text-xs text-green-700 mt-1">
-                Ingredient Cost ÷ Total Pax
+                Ingredient Cost ÷ Total Patients Served
               </div>
             </div>
 
@@ -1004,14 +1049,14 @@ const DailyEntry: React.FC = () => {
               <div className="font-medium text-gray-900 mb-2">Summary</div>
               <div className="space-y-1 text-gray-700">
                 <div>Total Ingredient Cost: RWF {calculations.totalIngredientCost.toLocaleString()}</div>
-                <div>Total Meals (Pax): {calculations.totalPax.toLocaleString()}</div>
+                <div>Total Patients Served: {calculations.totalPatientsServed.toLocaleString()}</div>
                 <div>Overhead Rate: {overheadPercentage}%</div>
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="font-medium text-gray-900 mb-2">Calculation Breakdown</div>
               <div className="space-y-1 text-gray-700 text-xs">
-                <div>1. Cost per Meal = Ingredient Cost ÷ Total Pax</div>
+                <div>1. Cost per Meal = Ingredient Cost ÷ Total Patients Served</div>
                 <div>2. Overhead = Cost per Meal × {overheadPercentage}%</div>
                 <div>3. Total CPM = Cost per Meal + Overhead</div>
               </div>
@@ -1027,12 +1072,12 @@ const DailyEntry: React.FC = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {editingDate ? 'Updating...' : 'Saving...'}
+                  {editingDate ? 'Updating...' : `Saving ${getServiceName(selectedService)} Data...`}
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {editingDate ? 'Update Daily Entry' : 'Save Daily Entry'}
+                  {editingDate ? `Update ${getServiceName(selectedService)} Entry` : `Save ${getServiceName(selectedService)} Entry`}
                 </>
               )}
             </button>
