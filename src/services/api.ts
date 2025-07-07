@@ -194,27 +194,6 @@ export const productionAPI = {
   deleteProduction: async (productionId: string) => {
     const response = await api.delete(`/production/${productionId}`);
     return response.data;
-  }
-  },
-  
-  getProduction: async (productionId: string) => {
-    const response = await api.get(`/production/${productionId}`);
-    return response.data;
-  },
-  
-  createProduction: async (productionData: any) => {
-    const response = await api.post('/production/', productionData);
-    return response.data;
-  },
-  
-  updateProduction: async (productionId: string, data: any) => {
-    const response = await api.put(`/production/${productionId}`, data);
-    return response.data;
-  },
-  
-  deleteProduction: async (productionId: string) => {
-    const response = await api.delete(`/production/${productionId}`);
-    return response.data;
   },
 };
 
