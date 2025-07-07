@@ -142,16 +142,18 @@ const DailyEntry: React.FC = () => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [ingredientsData, hospitalsData] = await Promise.all([
-        ingredientsAPI.getIngredients(),
-        hospitalsAPI.getHospitals()
-      ]);
-      
+      // Load ingredients first
+      const ingredientsData = await ingredientsAPI.getIngredients();
       setIngredients(ingredientsData);
+      
+      // Then load hospitals
+      const hospitalsData = await hospitalsAPI.getHospitals();
       setHospitals(hospitalsData.filter((hospital: Hospital) => hospital.active));
+      
       setError(null);
     } catch (err: any) {
-      setError('Failed to load initial data');
+      console.error('Failed to load initial data:', err);
+      setError('Failed to load initial data. Please check the console for details.');
     } finally {
       setLoading(false);
     }

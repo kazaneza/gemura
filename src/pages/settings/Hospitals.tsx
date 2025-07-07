@@ -38,11 +38,17 @@ const Hospitals: React.FC = () => {
   const loadHospitals = async () => {
     try {
       setLoading(true);
-      const data = await hospitalsAPI.getHospitals();
-      setHospitals(data);
+      try {
+        const data = await hospitalsAPI.getHospitals();
+        setHospitals(data || []);
+      } catch (fetchError) {
+        console.error('Error fetching hospitals:', fetchError);
+        setHospitals([]);
+      }
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load hospitals');
+      console.error('Failed to load hospitals:', err);
+      setError('Failed to load hospitals. Please check the console for details.');
     } finally {
       setLoading(false);
     }

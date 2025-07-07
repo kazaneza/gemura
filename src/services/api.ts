@@ -1,7 +1,6 @@
 // API service for backend communication
 import axios from 'axios';
 
-// ✅ FIXED: Use the correct backend domain that matches your Railway deployment
 const API_BASE_URL = 'http://102.37.150.125:8000/api';
 
 // Add some debug logging in development
@@ -88,8 +87,13 @@ export const usersAPI = {
 // Hospitals API (renamed from Schools)
 export const hospitalsAPI = {
   getHospitals: async () => {
-    const response = await api.get('/hospitals/');
-    return response.data;
+    try {
+      const response = await api.get('/hospitals/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching hospitals:', error);
+      return [];
+    }
   },
   
   getHospital: async (hospitalId: string) => {
