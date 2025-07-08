@@ -28,15 +28,19 @@ export const exportToPDF = async (options: PDFExportOptions): Promise<void> => {
     // Add logo (placeholder - you can replace with actual logo)
     const logoText = 'GEMURA';
     pdf.setFontSize(24);
-    pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(220, 38, 38); // Red color
     pdf.text(logoText, margin, yPosition);
+    
+    // Add CPM text
+    pdf.setFontSize(12);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('CPM', margin + 30, yPosition);
     yPosition += 15;
 
     // Add title
     pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0, 0, 0);
+    pdf.setTextColor(220, 38, 38); // Red color
     pdf.text(title, margin, yPosition);
     yPosition += 10;
 
