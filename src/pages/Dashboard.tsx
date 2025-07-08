@@ -219,7 +219,6 @@ const Dashboard: React.FC = () => {
         
         const weekCostTrend = weekPurchasesTrend.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
         const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-        const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
         
         const weekCPMTrend = weekMealsTrend > 0 ? 
           (weekCostTrend / weekMealsTrend) * (1 + overheadPercentage / 100) : 0;
