@@ -15,6 +15,48 @@ const MonthlyReport: React.FC = () => {
   const availableMonths = generateAvailableMonths();
   const currentMonthInfo = parseMonthId(selectedMonth);
 
+  // Service-based analysis
+  const serviceBreakdown = {
+    BREAKFAST: {
+      purchases: purchases.filter(p => p.service === 'BREAKFAST'),
+      productions: productions.filter(p => p.service === 'BREAKFAST'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overheadPerMeal: 0,
+      totalCPM: 0
+    },
+    LUNCH: {
+      purchases: purchases.filter(p => p.service === 'LUNCH'),
+      productions: productions.filter(p => p.service === 'LUNCH'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overheadPerMeal: 0,
+      totalCPM: 0
+    },
+    DINNER: {
+      purchases: purchases.filter(p => p.service === 'DINNER'),
+      productions: productions.filter(p => p.service === 'DINNER'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overheadPerMeal: 0,
+      totalCPM: 0
+    }
+  };
+
+  // Calculate metrics for each service
+  Object.keys(serviceBreakdown).forEach(service => {
+    const data = serviceBreakdown[service as keyof typeof serviceBreakdown];
+    data.totalCost = data.purchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
+    data.totalMeals = data.productions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
+    if (data.totalMeals > 0) {
+      data.costPerMeal = data.totalCost / data.totalMeals;
+      data.overheadPerMeal = monthlyTotals.overheadPerMeal;
+      data.totalCPM = data.costPerMeal + data.overheadPerMeal;
+    }
+  });
   useEffect(() => {
     loadMonthlyData();
   }, [selectedMonth]);
@@ -477,6 +519,94 @@ const MonthlyReport: React.FC = () => {
         </div>
       )}
 
+      {/* Service-Based Monthly Analysis */}
+      <div className="bg-white border rounded-lg print-section">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900">Service-Based Monthly Analysis</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.entries(serviceBreakdown).map(([service, data]) => (
+              <div key={service} className="bg-gray-50 rounded-lg p-4">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    {service === 'BREAKFAST' ? '🌅 Breakfast' : 
+                     service === 'LUNCH' ? '🍽️ Lunch' : 
+                     '🌙 Dinner'}
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{data.totalMeals.toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Total Meals</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-green-600">RWF {Math.round(data.costPerMeal).toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Cost/Meal (Ingredients)</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-orange-600">RWF {Math.round(data.overheadPerMeal).toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Overhead/Meal</div>
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold text-purple-600">RWF {Math.round(data.totalCPM).toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Total CPM</div>
+                    </div>
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        Total Cost: RWF {data.totalCost.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {monthlyTotals.totalMealsServed > 0 ? 
+                          `${Math.round((data.totalMeals / monthlyTotals.totalMealsServed) * 100)}% of total meals` : 
+                          '0% of total meals'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Service comparison table */}
+          <div className="mt-6">
+            <h4 className="text-md font-semibold text-gray-900 mb-3">Service Comparison</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left py-2 px-3 font-medium">Service</th>
+                    <th className="text-right py-2 px-3 font-medium">Meals</th>
+                    <th className="text-right py-2 px-3 font-medium">% of Total</th>
+                    <th className="text-right py-2 px-3 font-medium">Ingredient Cost</th>
+                    <th className="text-right py-2 px-3 font-medium">Cost/Meal</th>
+                    <th className="text-right py-2 px-3 font-medium">Total CPM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(serviceBreakdown).map(([service, data]) => (
+                    <tr key={service} className="border-b hover:bg-gray-50">
+                      <td className="py-2 px-3 font-medium">
+                        {service === 'BREAKFAST' ? '🌅 Breakfast' : 
+                         service === 'LUNCH' ? '🍽️ Lunch' : 
+                         '🌙 Dinner'}
+                      </td>
+                      <td className="py-2 px-3 text-right">{data.totalMeals.toLocaleString()}</td>
+                      <td className="py-2 px-3 text-right">
+                        {monthlyTotals.totalMealsServed > 0 ? 
+                          `${Math.round((data.totalMeals / monthlyTotals.totalMealsServed) * 100)}%` : 
+                          '0%'
+                        }
+                      </td>
+                      <td className="py-2 px-3 text-right">RWF {data.totalCost.toLocaleString()}</td>
+                      <td className="py-2 px-3 text-right">RWF {Math.round(data.costPerMeal).toLocaleString()}</td>
+                      <td className="py-2 px-3 text-right font-medium">RWF {Math.round(data.totalCPM).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Indirect Costs Breakdown - Minimalistic */}
       {indirectCostsBreakdown.details.length > 0 && (
         <div className="bg-white border rounded-lg print-section">

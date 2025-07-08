@@ -19,6 +19,49 @@ const WeeklyReport: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [overheadPercentage, setOverheadPercentage] = useState(15);
 
+  // Group data by service for service-based analysis
+  const serviceBreakdown = {
+    BREAKFAST: {
+      purchases: purchases.filter(p => p.service === 'BREAKFAST'),
+      productions: productions.filter(p => p.service === 'BREAKFAST'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overhead: 0,
+      totalCPM: 0
+    },
+    LUNCH: {
+      purchases: purchases.filter(p => p.service === 'LUNCH'),
+      productions: productions.filter(p => p.service === 'LUNCH'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overhead: 0,
+      totalCPM: 0
+    },
+    DINNER: {
+      purchases: purchases.filter(p => p.service === 'DINNER'),
+      productions: productions.filter(p => p.service === 'DINNER'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overhead: 0,
+      totalCPM: 0
+    }
+  };
+
+  // Calculate metrics for each service
+  Object.keys(serviceBreakdown).forEach(service => {
+    const data = serviceBreakdown[service as keyof typeof serviceBreakdown];
+    data.totalCost = data.purchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
+    data.totalMeals = data.productions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
+    if (data.totalMeals > 0) {
+      data.costPerMeal = data.totalCost / data.totalMeals;
+      data.overhead = data.costPerMeal * (overheadPercentage / 100);
+      data.totalCPM = data.costPerMeal + data.overhead;
+    }
+  });
+
   const availableMonths = generateAvailableMonths();
   const currentMonthInfo = parseMonthId(selectedMonth);
 
@@ -297,6 +340,34 @@ const WeeklyReport: React.FC = () => {
             </div>
           </div>
 
+          ${productions.length > 0 ? `
+          <div class="section">
+            <h3>Food Production by Hospital</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Hospital</th>
+                  <th>Service</th>
+                  <th>Patients Served</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${productions.map((production: any) => `
+                  <tr>
+                    <td>${production.hospital?.name || 'Unknown Hospital'}</td>
+                    <td>${production.service || 'Unknown'}</td>
+                    <td>${(production.patientsServed || 0).toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+                <tr style="background-color: #f0f0f0; font-weight: bold;">
+                  <td colspan="2">Total</td>
+                  <td>${weeklySummary.totalMealsServed.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          ` : '<div class="section"><h3>Food Production by Hospital</h3><p>No production data available for this week</p></div>'}
+
           ${dailyData.length > 0 ? `
           <div class="section">
             <h3>Daily Breakdown</h3>
@@ -519,6 +590,47 @@ const WeeklyReport: React.FC = () => {
         </div>
       </div>
 
+      {/* Service-Based Analysis */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Service-Based Analysis</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.entries(serviceBreakdown).map(([service, data]) => (
+              <div key={service} className="bg-gray-50 rounded-lg p-4">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    {service === 'BREAKFAST' ? '🌅 Breakfast' : 
+                     service === 'LUNCH' ? '🍽️ Lunch' : 
+                     '🌙 Dinner'}
+                  </h4>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{data.totalMeals.toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Meals Served</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-green-600">RWF {Math.round(data.costPerMeal).toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Cost/Meal</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-purple-600">RWF {Math.round(data.totalCPM).toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">Total CPM</div>
+                    </div>
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        Total Cost: RWF {data.totalCost.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Daily Breakdown Table */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -535,6 +647,7 @@ const WeeklyReport: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meals Served</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient Cost</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost/Meal</th>
@@ -544,31 +657,61 @@ const WeeklyReport: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {dailyData.map((day, index) => {
-                    const costPerMeal = day.meals > 0 ? day.cost / day.meals : 0;
-                    const overhead = costPerMeal * (overheadPercentage / 100);
-                    const totalCPM = costPerMeal + overhead;
-                    
-                    return (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {new Date(day.date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{day.meals.toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">RWF {day.cost.toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">RWF {Math.round(costPerMeal).toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">RWF {Math.round(overhead).toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">RWF {Math.round(totalCPM).toLocaleString()}</td>
-                      </tr>
+                    // Get productions for this day to show service breakdown
+                    const dayProductions = productions.filter(p => 
+                      new Date(p.productionDate).toISOString().split('T')[0] === day.date
                     );
+                    const dayPurchases = purchases.filter(p => 
+                      new Date(p.purchaseDate).toISOString().split('T')[0] === day.date
+                    );
+
+                    // Group by service for this day
+                    const serviceData: { [key: string]: { meals: number; cost: number } } = {};
+                    
+                    dayProductions.forEach(prod => {
+                      const service = prod.service || 'Unknown';
+                      if (!serviceData[service]) serviceData[service] = { meals: 0, cost: 0 };
+                      serviceData[service].meals += prod.patientsServed || 0;
+                    });
+                    
+                    dayPurchases.forEach(purchase => {
+                      const service = purchase.service || 'Unknown';
+                      if (!serviceData[service]) serviceData[service] = { meals: 0, cost: 0 };
+                      serviceData[service].cost += purchase.totalPrice || 0;
+                    });
+                    
+                    return Object.entries(serviceData).map(([service, data], serviceIndex) => {
+                      const costPerMeal = data.meals > 0 ? data.cost / data.meals : 0;
+                      const overhead = costPerMeal * (overheadPercentage / 100);
+                      const totalCPM = costPerMeal + overhead;
+                      
+                      return (
+                        <tr key={`${index}-${serviceIndex}`} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {serviceIndex === 0 ? new Date(day.date).toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            }) : ''}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {service}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{data.meals.toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">RWF {data.cost.toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">RWF {Math.round(costPerMeal).toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">RWF {Math.round(overhead).toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">RWF {Math.round(totalCPM).toLocaleString()}</td>
+                        </tr>
+                      );
+                    });
                   })}
                 </tbody>
                 <tfoot className="bg-gray-50">
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">TOTAL</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900" colSpan={2}>TOTAL</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{weeklySummary.totalMealsServed.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">RWF {weeklySummary.totalIngredientCost.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
