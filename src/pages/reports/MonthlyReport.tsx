@@ -143,7 +143,7 @@ const MonthlyReport: React.FC = () => {
         return productionDate >= weekStart && productionDate <= weekEnd;
       });
       
-      const weekMeals = weekProductions.reduce((sum, p) => sum + (p.beneficiaries || 0), 0);
+      const weekMeals = weekProductions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
       const weekIngredientCost = weekPurchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
       
       // Calculate weekly cost per meal (ingredients only)
