@@ -19,7 +19,7 @@ interface Hospital {
   id: string;
   name: string;
   location: string;
-  beds: number;
+  patientCapacity: number;
   active: boolean;
 }
 
@@ -944,7 +944,7 @@ const DailyEntry: React.FC = () => {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Hospital</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Location</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Total Beds</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Patient Capacity</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Patients Served</th>
                 </tr>
               </thead>
@@ -964,7 +964,7 @@ const DailyEntry: React.FC = () => {
                         <div className="text-gray-600">{hospital.location}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-gray-600">{hospital.beds}</div>
+                        <div className="text-gray-600">{hospital.patientCapacity}</div>
                       </td>
                       <td className="py-3 px-4">
                         <input
