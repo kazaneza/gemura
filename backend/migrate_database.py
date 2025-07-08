@@ -44,56 +44,112 @@ def migrate_database():
         
         print(f"📋 Current productions columns: {production_columns}")
         
-        # Handle different migration scenarios
-        if 'schoolId' in production_columns and 'hospitalId' not in production_columns:
-            print("🏥 Migrating productions table from school-based to hospital-based")
+        # Handle the complex productions table migration
+        needs_full_migration = False
+        
+        # Check if we have the old schema with schoolId
+        if 'schoolId' in production_columns:
+            print("🔄 Detected old schema with schoolId - performing full table migration")
+            needs_full_migration = True
+        
+        if needs_full_migration:
+            # Create new productions table with correct schema
+            print("🏗️ Creating new productions table with hospital-based schema")
             
-            # Add hospitalId column and copy data from schoolId
-            cursor.execute("ALTER TABLE productions ADD COLUMN hospitalId TEXT")
-            cursor.execute("UPDATE productions SET hospitalId = schoolId")
-            print("✅ Added hospitalId column and migrated data from schoolId")
+            # First, backup existing data
+            cursor.execute("""
+                CREATE TABLE productions_backup AS 
+                SELECT * FROM productions
+            """)
+            print("✅ Backed up existing productions data")
             
-        elif 'hospitalId' not in production_columns:
-            print("🏥 Adding hospitalId column to productions table")
-            cursor.execute("ALTER TABLE productions ADD COLUMN hospitalId TEXT")
-            print("✅ HospitalId column added")
-        else:
-            print("✅ Productions table already has hospitalId column")
-        
-        # Handle service column for productions (check if it already exists)
-        if 'service' not in production_columns:
-            print("🍽️ Adding service column to productions table")
-            cursor.execute("ALTER TABLE productions ADD COLUMN service TEXT DEFAULT 'LUNCH'")
-            print("✅ Service column added to productions")
-        else:
-            print("✅ Productions table already has service column")
-        
-        # Handle patientsServed column
-        if 'beneficiaries' in production_columns and 'patientsServed' not in production_columns:
-            print("👥 Adding patientsServed column and migrating from beneficiaries")
-            cursor.execute("ALTER TABLE productions ADD COLUMN patientsServed INTEGER DEFAULT 0")
-            cursor.execute("UPDATE productions SET patientsServed = beneficiaries")
-            print("✅ Beneficiaries migrated to patientsServed")
-        elif 'patientsServed' not in production_columns:
-            print("👥 Adding patientsServed column")
-            cursor.execute("ALTER TABLE productions ADD COLUMN patientsServed INTEGER DEFAULT 0")
-            print("✅ PatientsServed column added")
-        else:
-            print("✅ Productions table already has patientsServed column")
-        
-        # Ensure all productions have valid hospitalId values
-        cursor.execute("SELECT COUNT(*) FROM productions WHERE hospitalId IS NULL OR hospitalId = ''")
-        null_hospital_count = cursor.fetchone()[0]
-        
-        if null_hospital_count > 0:
-            print(f"🔧 Found {null_hospital_count} productions with null hospitalId, setting default values")
-            # Get first hospital ID as default
+            # Drop the old table
+            cursor.execute("DROP TABLE productions")
+            print("✅ Dropped old productions table")
+            
+            # Create new table with correct schema
+            cursor.execute("""
+                CREATE TABLE productions (
+                    id TEXT PRIMARY KEY,
+                    weekId TEXT NOT NULL,
+                    hospitalId TEXT NOT NULL,
+                    service TEXT DEFAULT 'LUNCH',
+                    productionDate DATETIME NOT NULL,
+                    patientsServed INTEGER DEFAULT 0,
+                    createdBy TEXT NOT NULL,
+                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (weekId) REFERENCES weeks (id),
+                    FOREIGN KEY (hospitalId) REFERENCES hospitals (id),
+                    FOREIGN KEY (createdBy) REFERENCES users (id)
+                )
+            """)
+            print("✅ Created new productions table")
+            
+            # Get first hospital ID as default for migration
             cursor.execute("SELECT id FROM hospitals LIMIT 1")
             default_hospital = cursor.fetchone()
+            
             if default_hospital:
-                cursor.execute("UPDATE productions SET hospitalId = ? WHERE hospitalId IS NULL OR hospitalId = ''", 
-                             (default_hospital[0],))
-                print("✅ Set default hospitalId for productions with null values")
+                default_hospital_id = default_hospital[0]
+                print(f"🔄 Using default hospital ID: {default_hospital_id}")
+                
+                # Migrate data from backup, mapping schoolId to hospitalId
+                cursor.execute("""
+                    INSERT INTO productions (
+                        id, weekId, hospitalId, service, productionDate, 
+                        patientsServed, createdBy, createdAt, updatedAt
+                    )
+                    SELECT 
+                        id,
+                        weekId,
+                        ? as hospitalId,
+                        COALESCE(service, 'LUNCH') as service,
+                        productionDate,
+                        COALESCE(beneficiaries, patientsServed, 0) as patientsServed,
+                        createdBy,
+                        createdAt,
+                        updatedAt
+                    FROM productions_backup
+                """, (default_hospital_id,))
+                
+                migrated_count = cursor.rowcount
+                print(f"✅ Migrated {migrated_count} production records")
+            else:
+                print("❌ No hospitals found - cannot migrate production data")
+            
+            # Drop backup table
+            cursor.execute("DROP TABLE productions_backup")
+            print("✅ Cleaned up backup table")
+            
+        else:
+            # Handle individual column additions for partial migrations
+            if 'hospitalId' not in production_columns:
+                print("🏥 Adding hospitalId column to productions table")
+                cursor.execute("ALTER TABLE productions ADD COLUMN hospitalId TEXT")
+                
+                # Set default hospital ID for existing records
+                cursor.execute("SELECT id FROM hospitals LIMIT 1")
+                default_hospital = cursor.fetchone()
+                if default_hospital:
+                    cursor.execute("UPDATE productions SET hospitalId = ?", (default_hospital[0],))
+                print("✅ HospitalId column added and populated")
+            
+            if 'service' not in production_columns:
+                print("🍽️ Adding service column to productions table")
+                cursor.execute("ALTER TABLE productions ADD COLUMN service TEXT DEFAULT 'LUNCH'")
+                print("✅ Service column added")
+            
+            if 'patientsServed' not in production_columns:
+                if 'beneficiaries' in production_columns:
+                    print("👥 Adding patientsServed column and migrating from beneficiaries")
+                    cursor.execute("ALTER TABLE productions ADD COLUMN patientsServed INTEGER DEFAULT 0")
+                    cursor.execute("UPDATE productions SET patientsServed = beneficiaries")
+                    print("✅ Beneficiaries migrated to patientsServed")
+                else:
+                    print("👥 Adding patientsServed column")
+                    cursor.execute("ALTER TABLE productions ADD COLUMN patientsServed INTEGER DEFAULT 0")
+                    print("✅ PatientsServed column added")
         
         # Commit all changes
         conn.commit()
@@ -106,7 +162,9 @@ def migrate_database():
             columns = cursor.fetchall()
             print(f"\n{table.upper()} table columns:")
             for col in columns:
-                print(f"  - {col[1]} ({col[2]})")
+                nullable = "NULL" if col[3] == 0 else "NOT NULL"
+                default = f" DEFAULT {col[4]}" if col[4] else ""
+                print(f"  - {col[1]} ({col[2]}) {nullable}{default}")
         
         # Show sample data to verify migration
         print("\n📊 Sample data verification:")
@@ -121,6 +179,16 @@ def migrate_database():
         cursor.execute("SELECT COUNT(*) FROM productions WHERE service IS NOT NULL")
         valid_service_count = cursor.fetchone()[0]
         print(f"Productions with valid service: {valid_service_count}")
+        
+        if prod_count > 0:
+            print("\n📋 Sample production record:")
+            cursor.execute("SELECT id, hospitalId, service, patientsServed FROM productions LIMIT 1")
+            sample = cursor.fetchone()
+            if sample:
+                print(f"  ID: {sample[0]}")
+                print(f"  Hospital ID: {sample[1]}")
+                print(f"  Service: {sample[2]}")
+                print(f"  Patients Served: {sample[3]}")
         
     except Exception as e:
         print(f"❌ Migration failed: {e}")
