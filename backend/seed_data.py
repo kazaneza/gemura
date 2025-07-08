@@ -56,10 +56,10 @@ async def seed_database():
             
             # Create sample hospitals
             hospitals_data = [
-                {"name": "Central Hospital", "location": "Kigali, Gasabo", "beds": 450, "contact": "admin@central.hospital", "active": True},
-                {"name": "Memorial Hospital", "location": "Kigali, Kicukiro", "beds": 620, "contact": "admin@memorial.hospital", "active": True},
-                {"name": "University Hospital", "location": "Kigali, Nyarugenge", "beds": 850, "contact": "office@university.hospital", "active": True},
-                {"name": "Community Hospital", "location": "Kigali, Gasabo", "beds": 280, "contact": "info@community.hospital", "active": True},
+                {"name": "Central Hospital", "location": "Kigali, Gasabo", "patientCapacity": 450, "contact": "admin@central.hospital", "active": True},
+                {"name": "Memorial Hospital", "location": "Kigali, Kicukiro", "patientCapacity": 620, "contact": "admin@memorial.hospital", "active": True},
+                {"name": "University Hospital", "location": "Kigali, Nyarugenge", "patientCapacity": 850, "contact": "office@university.hospital", "active": True},
+                {"name": "Community Hospital", "location": "Kigali, Gasabo", "patientCapacity": 280, "contact": "info@community.hospital", "active": True},
             ]
             
             for hospital_data in hospitals_data:

@@ -67,7 +67,7 @@ class UserRead(UserBase):
 class HospitalBase(SQLModel):
     name: str
     location: str
-    beds: int = 0  # Changed from students to beds
+    patientCapacity: int = 0  # Maximum number of patients the hospital can serve
     contact: Optional[str] = None
     active: bool = True
 
@@ -87,7 +87,7 @@ class HospitalCreate(HospitalBase):
 class HospitalUpdate(SQLModel):
     name: Optional[str] = None
     location: Optional[str] = None
-    beds: Optional[int] = None
+    patientCapacity: Optional[int] = None
     contact: Optional[str] = None
     active: Optional[bool] = None
 

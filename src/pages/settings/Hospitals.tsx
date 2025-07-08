@@ -6,7 +6,7 @@ interface HospitalData {
   id: string;
   name: string;
   location: string;
-  beds: number;
+  patientCapacity: number;
   contact: string;
   active: boolean;
   createdAt: string;
@@ -22,7 +22,7 @@ const Hospitals: React.FC = () => {
   const [newHospital, setNewHospital] = useState({
     name: '',
     location: '',
-    beds: '',
+    patientCapacity: '',
     contact: '',
     active: true,
   });
@@ -68,8 +68,8 @@ const Hospitals: React.FC = () => {
       setError('Location is required');
       return false;
     }
-    if (!newHospital.beds || parseInt(newHospital.beds) < 0) {
-      setError('Valid number of beds is required');
+    if (!newHospital.patientCapacity || parseInt(newHospital.patientCapacity) < 0) {
+      setError('Valid patient capacity is required');
       return false;
     }
     if (!newHospital.contact.trim()) {
@@ -90,7 +90,7 @@ const Hospitals: React.FC = () => {
       const hospitalData = {
         name: newHospital.name,
         location: newHospital.location,
-        beds: parseInt(newHospital.beds),
+        patientCapacity: parseInt(newHospital.patientCapacity),
         contact: newHospital.contact,
         active: newHospital.active,
       };
@@ -108,7 +108,7 @@ const Hospitals: React.FC = () => {
       setNewHospital({
         name: '',
         location: '',
-        beds: '',
+        patientCapacity: '',
         contact: '',
         active: true,
       });
@@ -126,7 +126,7 @@ const Hospitals: React.FC = () => {
     setNewHospital({
       name: hospital.name,
       location: hospital.location,
-      beds: hospital.beds.toString(),
+      patientCapacity: hospital.patientCapacity.toString(),
       contact: hospital.contact,
       active: hospital.active,
     });
@@ -175,7 +175,7 @@ const Hospitals: React.FC = () => {
     setNewHospital({
       name: '',
       location: '',
-      beds: '',
+      patientCapacity: '',
       contact: '',
       active: true,
     });
@@ -255,12 +255,12 @@ const Hospitals: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Beds</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Patient Capacity</label>
               <input
                 type="number"
                 min="0"
-                value={newHospital.beds}
-                onChange={(e) => setNewHospital({ ...newHospital, beds: e.target.value })}
+                value={newHospital.patientCapacity}
+                onChange={(e) => setNewHospital({ ...newHospital, patientCapacity: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 placeholder="0"
               />
@@ -370,8 +370,8 @@ const Hospitals: React.FC = () => {
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Beds:</span>
-                      <span className="font-medium text-gray-900">{hospital.beds.toLocaleString()}</span>
+                      <span className="text-gray-600">Patient Capacity:</span>
+                      <span className="font-medium text-gray-900">{hospital.patientCapacity.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Contact:</span>

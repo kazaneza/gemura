@@ -98,7 +98,7 @@ async def seed_march_2025_data():
                 central = Hospital(
                     name="Central Hospital",
                     location="Kigali",
-                    beds=450,
+                    patientCapacity=450,
                     contact="admin@central.hospital",
                     active=True
                 )
@@ -110,7 +110,7 @@ async def seed_march_2025_data():
                 memorial = Hospital(
                     name="Memorial Hospital",
                     location="Kigali",
-                    beds=620,
+                    patientCapacity=620,
                     contact="admin@memorial.hospital",
                     active=True
                 )
