@@ -3,6 +3,7 @@ import { Calendar, Download, FileText, Printer } from 'lucide-react';
 import { purchasesAPI, productionAPI, indirectCostsAPI } from '../../services/api';
 import MonthSelector from '../../components/MonthSelector';
 import { generateAvailableMonths, getCurrentMonth, getMonthId, parseMonthId } from '../../utils/monthlySystem';
+import { exportToPDF } from '../../utils/pdfExport';
 
 const MonthlyReport: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -213,6 +214,27 @@ const MonthlyReport: React.FC = () => {
         ? Math.round((cost.amount / monthlyTotals.totalIndirectCosts) * 100 * 10) / 10
         : 0
     }))
+  };
+
+  const handleExportPDF = () => {
+    const title = `Monthly Report - ${currentMonthInfo.monthName}`;
+    const exportData = {
+      ...monthlyTotals,
+      weeklyBreakdown,
+      serviceBreakdown,
+      indirectCostsBreakdown,
+      monthInfo: currentMonthInfo
+    };
+
+    exportToPDF({
+      title,
+      subtitle: `Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
+      data: exportData,
+      type: 'monthly'
+    }).catch(error => {
+      console.error('PDF export failed:', error);
+      alert('Failed to export PDF. Please try again.');
+    });
   };
 
   const handlePrint = () => {
@@ -435,7 +457,7 @@ const MonthlyReport: React.FC = () => {
             Excel
           </button>
           <button
-            onClick={() => alert('PDF export functionality would be implemented here')}
+            onClick={handleExportPDF}
             className="px-3 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
           >
             <Download className="h-4 w-4 mr-1 inline" />
