@@ -3,6 +3,7 @@ import { Calendar, Download, FileText, Printer, TrendingUp, BarChart3, PieChart 
 import { purchasesAPI, productionAPI } from '../../services/api';
 import MonthSelector from '../../components/MonthSelector';
 import { generateAvailableMonths, getCurrentMonth, getMonthId, parseMonthId } from '../../utils/monthlySystem';
+import { exportToPDF } from '../../utils/pdfExport';
 
 interface DailyData {
   date: string;
@@ -209,8 +210,29 @@ const WeeklyReport: React.FC = () => {
   };
 
   const handleExportPDF = () => {
-    console.log('Exporting to PDF...');
-    alert('PDF export functionality would be implemented here');
+    const selectedWeekOption = weekOptions.find(w => w.id === selectedWeek);
+    if (!selectedWeekOption) {
+      alert('No week selected');
+      return;
+    }
+
+    const title = `Weekly Report - ${selectedWeekOption.label}`;
+    const exportData = {
+      ...weeklySummary,
+      serviceBreakdown,
+      dailyData,
+      weekInfo: selectedWeekOption
+    };
+
+    exportToPDF({
+      title,
+      subtitle: `${currentMonthInfo.monthName} - Generated on ${new Date().toLocaleDateString()}`,
+      data: exportData,
+      type: 'weekly'
+    }).catch(error => {
+      console.error('PDF export failed:', error);
+      alert('Failed to export PDF. Please try again.');
+    });
   };
 
   const handlePrint = () => {
