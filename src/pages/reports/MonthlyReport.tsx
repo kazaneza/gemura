@@ -217,6 +217,11 @@ const MonthlyReport: React.FC = () => {
   };
 
   const handleExportPDF = () => {
+    if (!indirectCostsBreakdown || weeklyBreakdown.length === 0) {
+      alert('No data available to export');
+      return;
+    }
+
     const title = `Monthly Report - ${currentMonthInfo.monthName}`;
     const exportData = {
       ...monthlyTotals,
@@ -444,8 +449,8 @@ const MonthlyReport: React.FC = () => {
     <div className="max-w-6xl mx-auto space-y-6 print-content">
       {/* Header */}
       <div className="flex items-center justify-between no-print">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Monthly Report</h1>
+        <div id="report-title">
+          <h1 className="text-3xl font-bold text-gray-900" id="report-title">Monthly Report</h1>
           <p className="text-gray-600">{currentMonthInfo.monthName}</p>
         </div>
         <div className="flex space-x-2">
@@ -456,8 +461,8 @@ const MonthlyReport: React.FC = () => {
             <FileText className="h-4 w-4 mr-1 inline" />
             Excel
           </button>
-          <button
-            onClick={handleExportPDF}
+          <button 
+            onClick={handleExportPDF} 
             className="px-3 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
           >
             <Download className="h-4 w-4 mr-1 inline" />
@@ -491,7 +496,7 @@ const MonthlyReport: React.FC = () => {
 
       {/* Weekly Summary Table - Minimalistic with Correct Calculations */}
       {weeklyBreakdown.length > 0 && (
-        <div className="bg-white border rounded-lg print-section">
+        <div className="bg-white border rounded-lg print-section" id="weekly-summary">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">Weekly Summary</h3>
             <div className="overflow-x-auto">
@@ -543,7 +548,7 @@ const MonthlyReport: React.FC = () => {
       )}
 
       {/* Service-Based Monthly Analysis */}
-      <div className="bg-white border rounded-lg print-section">
+      <div className="bg-white border rounded-lg print-section" id="service-analysis">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-900">Service-Based Monthly Analysis</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -632,7 +637,7 @@ const MonthlyReport: React.FC = () => {
       </div>
       {/* Indirect Costs Breakdown - Minimalistic */}
       {indirectCostsBreakdown.details.length > 0 && (
-        <div className="bg-white border rounded-lg print-section">
+        <div className="bg-white border rounded-lg print-section" id="indirect-costs">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">Indirect Costs</h3>
             <div className="overflow-x-auto">

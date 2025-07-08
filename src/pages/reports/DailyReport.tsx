@@ -89,6 +89,11 @@ const DailyReport: React.FC = () => {
       return;
     }
 
+    if (!reportData) {
+      alert('No data available to export');
+      return;
+    }
+
     const title = `Daily Report - ${new Date(selectedDate).toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
@@ -324,7 +329,7 @@ const DailyReport: React.FC = () => {
     <div className="space-y-6 print-content">
       <div className="md:flex md:items-center md:justify-between no-print">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate" id="report-title">
             Daily Report
           </h2>
           <p className="mt-1 text-sm text-gray-500">
@@ -399,7 +404,7 @@ const DailyReport: React.FC = () => {
       </div>
 
       {/* Daily Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-section">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-section" id="daily-summary">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -458,7 +463,7 @@ const DailyReport: React.FC = () => {
       </div>
 
       {/* Additional Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print-section">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print-section" id="additional-metrics">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">{reportData?.totalIngredientCost.toLocaleString() || '0'}</div>
@@ -480,7 +485,7 @@ const DailyReport: React.FC = () => {
       </div>
 
       {/* Ingredients Purchased */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="ingredients-purchased">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Ingredients Purchased</h3>
         </div>
@@ -526,9 +531,9 @@ const DailyReport: React.FC = () => {
       </div>
 
       {/* Food Production */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="food-production">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Food Production by School</h3>
+          <h3 className="text-lg font-medium text-gray-900">Food Production by Hospital</h3>
         </div>
         <div className="p-6">
           {!reportData || reportData.productions.length === 0 ? (
@@ -575,7 +580,7 @@ const DailyReport: React.FC = () => {
       </div>
 
       {/* Cost Analysis Summary */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="cost-analysis">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Cost Analysis Summary</h3>
         </div>

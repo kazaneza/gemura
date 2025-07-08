@@ -216,6 +216,11 @@ const WeeklyReport: React.FC = () => {
       return;
     }
 
+    if (!selectedWeekOption) {
+      alert('No week selected');
+      return;
+    }
+
     const title = `Weekly Report - ${selectedWeekOption.label}`;
     const exportData = {
       ...weeklySummary,
@@ -462,7 +467,7 @@ const WeeklyReport: React.FC = () => {
     <div className="space-y-6 print-content">
       <div className="md:flex md:items-center md:justify-between no-print">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate" id="report-title">
             Weekly Report
           </h2>
           <p className="mt-1 text-sm text-gray-500">
@@ -554,7 +559,7 @@ const WeeklyReport: React.FC = () => {
       </div>
 
       {/* Weekly Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-section">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-section" id="weekly-summary">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -613,7 +618,7 @@ const WeeklyReport: React.FC = () => {
       </div>
 
       {/* Service-Based Analysis */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="service-analysis">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Service-Based Analysis</h3>
         </div>
@@ -654,7 +659,7 @@ const WeeklyReport: React.FC = () => {
       </div>
 
       {/* Daily Breakdown Table */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="daily-breakdown">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Daily Breakdown</h3>
         </div>
