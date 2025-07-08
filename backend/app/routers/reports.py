@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from datetime import datetime, timedelta
 from sqlmodel import Session, select, func
 from app.database import get_session
-from app.models import User, Production, Purchase, IndirectCost, School, Week
+from app.models import User, Production, Purchase, IndirectCost, Hospital, Week
 from app.auth import get_current_active_user
 
 router = APIRouter()
@@ -82,36 +82,36 @@ async def get_dashboard_data(
     month_avg_cpm = (month_ingredient_cost + month_indirect_total) / month_meals if month_meals > 0 else 0
     
     # Yesterday's school contribution
-    schools_contribution = []
+    hospitals_contribution = []
     if yesterday_meals > 0:
-        # Group yesterday's production by school
-        school_meals = {}
+        # Group yesterday's production by hospital
+        hospital_meals = {}
         for production in yesterday_productions:
-            school_id = production.schoolId
-            if school_id not in school_meals:
-                school_meals[school_id] = {
+            hospital_id = production.hospitalId
+            if hospital_id not in hospital_meals:
+                hospital_meals[hospital_id] = {
                     'meals': 0,
-                    'school': None
+                    'hospital': None
                 }
-            school_meals[school_id]['meals'] += production.mealsCalculated
+            hospital_meals[hospital_id]['meals'] += production.patientsServed
             
-            # Get school info
-            if not school_meals[school_id]['school']:
-                school = session.get(School, school_id)
-                school_meals[school_id]['school'] = school
+            # Get hospital info
+            if not hospital_meals[hospital_id]['hospital']:
+                hospital = session.get(Hospital, hospital_id)
+                hospital_meals[hospital_id]['hospital'] = hospital
         
         # Calculate percentages
-        for school_data in school_meals.values():
-            if school_data['school']:
-                percentage = (school_data['meals'] / yesterday_meals) * 100
-                schools_contribution.append({
-                    'name': school_data['school'].name,
-                    'meals': school_data['meals'],
+        for hospital_data in hospital_meals.values():
+            if hospital_data['hospital']:
+                percentage = (hospital_data['meals'] / yesterdayMeals) * 100
+                hospitals_contribution.append({
+                    'name': hospital_data['hospital'].name,
+                    'meals': hospital_data['meals'],
                     'percentage': round(percentage, 1)
                 })
         
         # Sort by meals descending
-        schools_contribution.sort(key=lambda x: x['meals'], reverse=True)
+        hospitals_contribution.sort(key=lambda x: x['meals'], reverse=True)
     
     # 7-day trend
     seven_day_trend = []
@@ -164,7 +164,7 @@ async def get_dashboard_data(
         "weekToDateMeals": week_meals,
         "currentWeekCPM": round(current_week_cpm),
         "monthToDateAvgCPM": round(month_avg_cpm),
-        "schoolsContribution": schools_contribution,
+        "hospitalsContribution": hospitals_contribution,
         "sevenDayTrend": seven_day_trend,
         "monthCPMTrend": month_cpm_trend
     }
@@ -207,7 +207,7 @@ async def get_weekly_report(
                 "meals": 0,
                 "cost": 0
             }
-        daily_data[date_str]["meals"] += production.mealsCalculated
+        daily_data[date_str]["meals"] += production.patientsServed
     
     for purchase in purchases:
         date_str = purchase.purchaseDate.date().isoformat()
@@ -294,7 +294,7 @@ async def get_indirect_costs_breakdown(
         )
     ).all()
     
-    total_meals = sum(p.mealsCalculated for p in month_productions)
+    total_meals = sum(p.patientsServed for p in month_productions)
     total_amount = sum(c.amount for c in indirect_costs)
     
     # Group costs by category and calculate percentages
@@ -377,36 +377,36 @@ async def get_cost_analysis(
     # Calculate totals
     total_ingredient_cost = sum(p.totalPrice for p in month_purchases)
     total_indirect_cost = sum(c.amount for c in indirect_costs)
-    total_meals = sum(p.mealsCalculated for p in month_productions)
+    total_meals = sum(p.patientsServed for p in month_productions)
     
     # Calculate cost per meal
     ingredient_cpm = total_ingredient_cost / total_meals if total_meals > 0 else 0
     indirect_cpm = total_indirect_cost / total_meals if total_meals > 0 else 0
     total_cpm = ingredient_cpm + indirect_cpm
     
-    # Group by schools
-    school_data = {}
+    # Group by hospitals
+    hospital_data = {}
     for production in month_productions:
-        school_id = production.schoolId
-        if school_id not in school_data:
-            school = session.get(School, school_id)
-            school_data[school_id] = {
-                "name": school.name if school else "Unknown",
+        hospital_id = production.hospitalId
+        if hospital_id not in hospital_data:
+            hospital = session.get(Hospital, hospital_id)
+            hospital_data[hospital_id] = {
+                "name": hospital.name if hospital else "Unknown",
                 "meals": 0
             }
-        school_data[school_id]["meals"] += production.mealsCalculated
+        hospital_data[hospital_id]["meals"] += production.patientsServed
     
     # Convert to list and calculate percentages
-    schools = []
-    for school in school_data.values():
-        percentage = (school["meals"] / total_meals * 100) if total_meals > 0 else 0
-        schools.append({
-            "name": school["name"],
-            "meals": school["meals"],
+    hospitals = []
+    for hospital in hospital_data.values():
+        percentage = (hospital["meals"] / total_meals * 100) if total_meals > 0 else 0
+        hospitals.append({
+            "name": hospital["name"],
+            "meals": hospital["meals"],
             "percentage": round(percentage, 1)
         })
     
-    schools.sort(key=lambda x: x["meals"], reverse=True)
+    hospitals.sort(key=lambda x: x["meals"], reverse=True)
     
     return {
         "totalIngredientCost": total_ingredient_cost,
@@ -415,7 +415,7 @@ async def get_cost_analysis(
         "ingredientCPM": round(ingredient_cpm, 2),
         "indirectCPM": round(indirect_cpm, 2),
         "totalCPM": round(total_cpm, 2),
-        "schools": schools,
+        "hospitals": hospitals,
         "purchases": month_purchases,
         "productions": month_productions,
         "indirectCosts": indirect_costs
