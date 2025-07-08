@@ -15,48 +15,6 @@ const MonthlyReport: React.FC = () => {
   const availableMonths = generateAvailableMonths();
   const currentMonthInfo = parseMonthId(selectedMonth);
 
-  // Service-based analysis
-  const serviceBreakdown = {
-    BREAKFAST: {
-      purchases: purchases.filter(p => p.service === 'BREAKFAST'),
-      productions: productions.filter(p => p.service === 'BREAKFAST'),
-      totalCost: 0,
-      totalMeals: 0,
-      costPerMeal: 0,
-      overheadPerMeal: 0,
-      totalCPM: 0
-    },
-    LUNCH: {
-      purchases: purchases.filter(p => p.service === 'LUNCH'),
-      productions: productions.filter(p => p.service === 'LUNCH'),
-      totalCost: 0,
-      totalMeals: 0,
-      costPerMeal: 0,
-      overheadPerMeal: 0,
-      totalCPM: 0
-    },
-    DINNER: {
-      purchases: purchases.filter(p => p.service === 'DINNER'),
-      productions: productions.filter(p => p.service === 'DINNER'),
-      totalCost: 0,
-      totalMeals: 0,
-      costPerMeal: 0,
-      overheadPerMeal: 0,
-      totalCPM: 0
-    }
-  };
-
-  // Calculate metrics for each service
-  Object.keys(serviceBreakdown).forEach(service => {
-    const data = serviceBreakdown[service as keyof typeof serviceBreakdown];
-    data.totalCost = data.purchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
-    data.totalMeals = data.productions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
-    if (data.totalMeals > 0) {
-      data.costPerMeal = data.totalCost / data.totalMeals;
-      data.overheadPerMeal = monthlyTotals.overheadPerMeal;
-      data.totalCPM = data.costPerMeal + data.overheadPerMeal;
-    }
-  });
   useEffect(() => {
     loadMonthlyData();
   }, [selectedMonth]);
@@ -114,6 +72,49 @@ const MonthlyReport: React.FC = () => {
     monthlyTotals.overheadPerMeal = monthlyTotals.totalIndirectCosts / monthlyTotals.totalMealsServed;
     monthlyTotals.totalCPM = monthlyTotals.costPerMeal + monthlyTotals.overheadPerMeal;
   }
+
+  // Service-based analysis (calculated after monthlyTotals)
+  const serviceBreakdown = {
+    BREAKFAST: {
+      purchases: purchases.filter(p => p.service === 'BREAKFAST'),
+      productions: productions.filter(p => p.service === 'BREAKFAST'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overheadPerMeal: 0,
+      totalCPM: 0
+    },
+    LUNCH: {
+      purchases: purchases.filter(p => p.service === 'LUNCH'),
+      productions: productions.filter(p => p.service === 'LUNCH'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overheadPerMeal: 0,
+      totalCPM: 0
+    },
+    DINNER: {
+      purchases: purchases.filter(p => p.service === 'DINNER'),
+      productions: productions.filter(p => p.service === 'DINNER'),
+      totalCost: 0,
+      totalMeals: 0,
+      costPerMeal: 0,
+      overheadPerMeal: 0,
+      totalCPM: 0
+    }
+  };
+
+  // Calculate metrics for each service
+  Object.keys(serviceBreakdown).forEach(service => {
+    const data = serviceBreakdown[service as keyof typeof serviceBreakdown];
+    data.totalCost = data.purchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
+    data.totalMeals = data.productions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
+    if (data.totalMeals > 0) {
+      data.costPerMeal = data.totalCost / data.totalMeals;
+      data.overheadPerMeal = monthlyTotals.overheadPerMeal;
+      data.totalCPM = data.costPerMeal + data.overheadPerMeal;
+    }
+  });
 
   // Generate weekly breakdown with correct calculations
   const generateWeeklyBreakdown = () => {
