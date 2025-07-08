@@ -131,10 +131,10 @@ const Dashboard: React.FC = () => {
       // Calculate metrics using same logic as Daily Entry (pax not mealsCalculated)
       
       // Yesterday's meals (using beneficiaries)
-      const yesterdayMeals = yesterdayProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiaries || 0), 0);
+      const yesterdayMeals = yesterdayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
       // Week-to-date meals
-      const weekToDateMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiaries || 0), 0);
+      const weekToDateMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
       // Week purchases for CPM calculation
       const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
@@ -145,7 +145,7 @@ const Dashboard: React.FC = () => {
       const currentWeekCPM = weekCostPerMeal + weekOverhead;
       
       // Month-to-date calculations
-      const monthMeals = monthProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiaries || 0), 0);
+      const monthMeals = monthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const monthIngredientCost = monthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       
       const monthCostPerMeal = monthMeals > 0 ? monthIngredientCost / monthMeals : 0;
@@ -218,6 +218,7 @@ const Dashboard: React.FC = () => {
         });
         
         const weekCostTrend = weekPurchasesTrend.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+        const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
         const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
         
         const weekCPMTrend = weekMealsTrend > 0 ? 

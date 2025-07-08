@@ -59,7 +59,7 @@ const MonthlyReport: React.FC = () => {
 
   // Client-side calculation using same logic as Daily Entry (pax not mealsCalculated)
   const monthlyTotals = {
-    totalMealsServed: productions.reduce((sum, prod) => sum + (prod.beneficiaries || 0), 0),
+    totalMealsServed: productions.reduce((sum, prod) => sum + (prod.patientsServed || 0), 0),
     totalIngredientCosts: purchases.reduce((sum, purchase) => sum + (purchase.totalPrice || 0), 0),
     totalIndirectCosts: indirectCosts.reduce((sum, cost) => sum + (cost.amount || 0), 0),
     costPerMeal: 0,
@@ -101,6 +101,7 @@ const MonthlyReport: React.FC = () => {
       });
       
       const weekMeals = weekProductions.reduce((sum, p) => sum + (p.beneficiaries || 0), 0);
+      const weekMeals = weekProductions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
       const weekIngredientCost = weekPurchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
       
       // Calculate weekly cost per meal (ingredients only)

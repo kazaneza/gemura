@@ -116,7 +116,7 @@ const WeeklyReport: React.FC = () => {
 
   // Client-side calculation using same logic as Daily Entry (pax not mealsCalculated)
   const weeklySummary = {
-    totalMealsServed: productions.reduce((sum, prod) => sum + (prod.beneficiaries || 0), 0),
+    totalMealsServed: productions.reduce((sum, prod) => sum + (prod.patientsServed || 0), 0),
     totalIngredientCost: purchases.reduce((sum, purchase) => sum + (purchase.totalPrice || 0), 0),
     costPerMeal: 0,
     overhead: 0,
@@ -148,7 +148,7 @@ const WeeklyReport: React.FC = () => {
       );
       
       const dayCost = dayPurchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
-      const dayMeals = dayProductions.reduce((sum, p) => sum + (p.beneficiaries || 0), 0);
+      const dayMeals = dayProductions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
       
       if (dayCost > 0 || dayMeals > 0) {
         dailyData.push({
