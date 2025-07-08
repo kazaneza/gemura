@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Download, FileText, Printer, TrendingUp, BarChart3, Calculator, Users } from 'lucide-react';
 import { reportsAPI, purchasesAPI, productionAPI } from '../../services/api';
+import { exportToPDF } from '../../utils/pdfExport';
 
 interface DailyReportData {
   date: string;
@@ -83,8 +84,27 @@ const DailyReport: React.FC = () => {
   };
 
   const handleExportPDF = () => {
-    console.log('Exporting to PDF...');
-    alert('PDF export functionality would be implemented here');
+    if (!reportData) {
+      alert('No data available to export');
+      return;
+    }
+
+    const title = `Daily Report - ${new Date(selectedDate).toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })}`;
+
+    exportToPDF({
+      title,
+      subtitle: `Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
+      data: reportData,
+      type: 'daily'
+    }).catch(error => {
+      console.error('PDF export failed:', error);
+      alert('Failed to export PDF. Please try again.');
+    });
   };
 
   const handlePrint = () => {
