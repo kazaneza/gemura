@@ -371,11 +371,11 @@ const Hospitals: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Beneficiary Capacity:</span>
-                      <span className="font-medium text-gray-900">{hospital.beneficiaryCapacity.toLocaleString()}</span>
+                      <span className="font-medium text-gray-900">{(hospital.patientCapacity || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Contact:</span>
-                      <span className="font-medium text-gray-900 truncate ml-2">{hospital.contact}</span>
+                      <span className="font-medium text-gray-900 truncate ml-2">{hospital.contact || 'N/A'}</span>
                     </div>
                   </div>
 
