@@ -162,9 +162,14 @@ const DailyEntry: React.FC = () => {
   const loadExistingEntries = async () => {
     try {
       // Get last 7 days of entries
-      const endDate = new Date();
+      const today = new Date();
       const startDate = new Date();
-      startDate.setDate(endDate.getDate() - 7);
+      startDate.setDate(today.getDate() - 6); // Include today + 6 previous days = 7 days total
+      
+      // Set time to start of day for startDate and end of day for endDate
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(today);
+      endDate.setHours(23, 59, 59, 999);
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -181,9 +186,11 @@ const DailyEntry: React.FC = () => {
       const entriesByDate: { [key: string]: ExistingEntry } = {};
 
       purchases.forEach((purchase: any) => {
-        // Extract date without timezone conversion
+        // Extract date properly
         const purchaseDate = new Date(purchase.purchaseDate);
-        const date = purchaseDate.toISOString().split('T')[0];
+        const date = purchaseDate.getFullYear() + '-' + 
+                    String(purchaseDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(purchaseDate.getDate()).padStart(2, '0');
         if (!entriesByDate[date]) {
           entriesByDate[date] = {
             date,
@@ -201,9 +208,11 @@ const DailyEntry: React.FC = () => {
       });
 
       productions.forEach((production: any) => {
-        // Extract date without timezone conversion
+        // Extract date properly
         const productionDate = new Date(production.productionDate);
-        const date = productionDate.toISOString().split('T')[0];
+        const date = productionDate.getFullYear() + '-' + 
+                    String(productionDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(productionDate.getDate()).padStart(2, '0');
         if (!entriesByDate[date]) {
           entriesByDate[date] = {
             date,
@@ -217,15 +226,15 @@ const DailyEntry: React.FC = () => {
           };
         }
         entriesByDate[date].productions.push(production);
-        // Use patientsServed instead of beneficiaries
-        entriesByDate[date].totalMeals += production.patientsServed;
+        // Use patientsServed from backend
+        entriesByDate[date].totalMeals += production.patientsServed || 0;
       });
 
-      // Calculate metrics for each day using same logic as Daily Entry
+      // Calculate metrics for each day
       Object.values(entriesByDate).forEach(entry => {
         if (entry.totalMeals > 0) {
           entry.costPerMeal = entry.totalCost / entry.totalMeals;
-          entry.overhead = entry.costPerMeal * (overheadPercentage / 100);
+          entry.overhead = 50; // Fixed overhead per meal
           entry.totalCPM = entry.costPerMeal + entry.overhead;
         }
       });
@@ -236,6 +245,7 @@ const DailyEntry: React.FC = () => {
 
     } catch (err: any) {
       console.error('Failed to load existing entries:', err);
+      setExistingEntries([]); // Set empty array on error
     }
   };
 
