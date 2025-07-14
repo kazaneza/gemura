@@ -321,7 +321,7 @@ const DailyEntry: React.FC = () => {
         if (production.service && resetHospitalEntries[production.service][production.hospitalId]) {
           resetHospitalEntries[production.service][production.hospitalId] = {
             ...resetHospitalEntries[production.service][production.hospitalId],
-            beneficiariesServed: production.beneficiariesServed
+            beneficiariesServed: production.patientsServed
           };
         }
       });
@@ -536,7 +536,7 @@ const DailyEntry: React.FC = () => {
           hospitalId: hospital.hospitalId,
           service: selectedService,
           productionDate: productionDateTime.toISOString(),
-          beneficiariesServed: hospital.beneficiariesServed,
+          patientsServed: hospital.beneficiariesServed,
           weekId: 'temp-week-id'
         };
         await productionAPI.createProduction(productionData);

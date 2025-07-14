@@ -129,21 +129,21 @@ const Dashboard: React.FC = () => {
       // Calculate metrics using same logic as Daily Entry (pax not mealsCalculated)
       
       // Today's meals and CPM
-      const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiariesServed || 0), 0);
+      const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const todayCostPerMeal = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
       const todayOverhead = todayCostPerMeal * (overheadPercentage / 100);
       const todayCPM = todayCostPerMeal + todayOverhead;
       
       // Last week CPM
-      const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiariesServed || 0), 0);
+      const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const lastWeekCostPerMeal = lastWeekMeals > 0 ? lastWeekIngredientCost / lastWeekMeals : 0;
       const lastWeekOverhead = lastWeekCostPerMeal * (overheadPercentage / 100);
       const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       
       // Current week CPM
-      const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiariesServed || 0), 0);
+      const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
       const weekOverhead = weekCostPerMeal * (overheadPercentage / 100);
@@ -162,7 +162,7 @@ const Dashboard: React.FC = () => {
               hospital: hospitals.find((h: any) => h.id === hospitalId)
             };
           }
-          hospitalMeals[hospitalId].meals += production.beneficiariesServed || 0;
+          hospitalMeals[hospitalId].meals += production.patientsServed || 0;
         });
         
         Object.values(hospitalMeals).forEach(({ meals, hospital }) => {
@@ -189,7 +189,7 @@ const Dashboard: React.FC = () => {
         const dayProductions = sevenDayProductions.filter((prod: any) => 
           new Date(prod.productionDate).toISOString().split('T')[0] === dateStr
         );
-        const dayMeals = dayProductions.reduce((sum: number, prod: any) => sum + (prod.beneficiariesServed || 0), 0);
+        const dayMeals = dayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
         
         sevenDayTrend.push({
           date: date.toLocaleDateString('en-US', { weekday: 'short' }),

@@ -6,7 +6,7 @@ interface HospitalData {
   id: string;
   name: string;
   location: string;
-  beneficiaryCapacity: number;
+  patientCapacity: number;
   contact: string;
   active: boolean;
   createdAt: string;
@@ -22,7 +22,7 @@ const Hospitals: React.FC = () => {
   const [newHospital, setNewHospital] = useState({
     name: '',
     location: '',
-    beneficiaryCapacity: '',
+    patientCapacity: '',
     contact: '',
     active: true,
   });
