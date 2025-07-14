@@ -132,21 +132,23 @@ const Dashboard: React.FC = () => {
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const todayCostPerMeal = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
-      const todayOverhead = todayCostPerMeal * (overheadPercentage / 100);
+      const todayOverhead = 50; // Fixed RWF 50 per meal overhead
       const todayCPM = todayCostPerMeal + todayOverhead;
       
       // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const lastWeekCostPerMeal = lastWeekMeals > 0 ? lastWeekIngredientCost / lastWeekMeals : 0;
-      const lastWeekOverhead = lastWeekCostPerMeal * (overheadPercentage / 100);
+      const lastWeekOverhead = 50; // Fixed RWF 50 per meal overhead
       const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       
       // Current week CPM
       const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
-      const weekOverhead = weekCostPerMeal * (overheadPercentage / 100);
+      const weekOverhead = 50; // Fixed RWF 50 per meal overhead
+      const lastWeekOverhead = 50; // Fixed RWF 50 per meal overhead
+      const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       const currentWeekCPM = weekCostPerMeal + weekOverhead;
 
       // Today's hospital contribution
