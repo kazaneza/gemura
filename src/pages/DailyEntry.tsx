@@ -19,7 +19,7 @@ interface Hospital {
   id: string;
   name: string;
   location: string;
-  patientCapacity: number;
+  beneficiaryCapacity: number;
   active: boolean;
 }
 
@@ -39,7 +39,7 @@ interface HospitalEntry {
   hospitalId: string;
   hospitalName: string;
   service: MealService;
-  patientsServed: number;
+  beneficiariesServed: number;
 }
 
 interface ExistingEntry {
@@ -130,7 +130,7 @@ const DailyEntry: React.FC = () => {
             hospitalId: hospital.id,
             hospitalName: hospital.name,
             service: service as MealService,
-            patientsServed: 0
+            beneficiariesServed: 0
           };
         });
       });
@@ -299,7 +299,7 @@ const DailyEntry: React.FC = () => {
             hospitalId: hospital.id,
             hospitalName: hospital.name,
             service: service as MealService,
-            patientsServed: 0
+            beneficiariesServed: 0
           };
         });
       });
@@ -321,7 +321,7 @@ const DailyEntry: React.FC = () => {
         if (production.service && resetHospitalEntries[production.service][production.hospitalId]) {
           resetHospitalEntries[production.service][production.hospitalId] = {
             ...resetHospitalEntries[production.service][production.hospitalId],
-            patientsServed: production.patientsServed
+            beneficiariesServed: production.beneficiariesServed
           };
         }
       });
@@ -416,9 +416,9 @@ const DailyEntry: React.FC = () => {
   // Calculations for the selected service
   const calculations = {
     totalIngredientCost: Object.values(ingredientEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.totalPrice, 0),
-    totalPatientsServed: Object.values(hospitalEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.patientsServed, 0),
+    totalBeneficiariesServed: Object.values(hospitalEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.beneficiariesServed, 0),
     get costPerMeal() {
-      return this.totalPatientsServed > 0 ? this.totalIngredientCost / this.totalPatientsServed : 0;
+      return this.totalBeneficiariesServed > 0 ? this.totalIngredientCost / this.totalBeneficiariesServed : 0;
     },
     get overhead() {
       return overheadPerMeal; // Direct overhead per meal
@@ -441,7 +441,7 @@ const DailyEntry: React.FC = () => {
     );
     
     const validHospitals = Object.values(hospitalEntries[selectedService] || {}).filter(entry => 
-      entry.patientsServed > 0
+      entry.beneficiariesServed > 0
     );
 
     if (validIngredients.length === 0) {
@@ -525,7 +525,7 @@ const DailyEntry: React.FC = () => {
 
       // Save productions (only for hospitals with production data)
       const validHospitals = Object.values(hospitalEntries[selectedService] || {}).filter(entry => 
-        entry.patientsServed > 0
+        entry.beneficiariesServed > 0
       );
 
       for (const hospital of validHospitals) {
@@ -536,7 +536,7 @@ const DailyEntry: React.FC = () => {
           hospitalId: hospital.hospitalId,
           service: selectedService,
           productionDate: productionDateTime.toISOString(),
-          patientsServed: hospital.patientsServed,
+          beneficiariesServed: hospital.beneficiariesServed,
           weekId: 'temp-week-id'
         };
         await productionAPI.createProduction(productionData);
@@ -579,7 +579,7 @@ const DailyEntry: React.FC = () => {
             hospitalId: hospital.id,
             hospitalName: hospital.name,
             service: service as MealService,
-            patientsServed: 0
+            beneficiariesServed: 0
           };
         });
       });
@@ -639,7 +639,7 @@ const DailyEntry: React.FC = () => {
           hospitalId: hospital.id,
           hospitalName: hospital.name,
           service: service as MealService,
-          patientsServed: 0
+          beneficiariesServed: 0
         };
       });
     });
@@ -944,10 +944,10 @@ const DailyEntry: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">
-            Patients Served for {getServiceName(selectedService)}
+            Beneficiaries Served for {getServiceName(selectedService)}
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Enter the number of patients served at each hospital for {getServiceName(selectedService).toLowerCase()} service.
+            Enter the number of beneficiaries served at each hospital for {getServiceName(selectedService).toLowerCase()} service.
           </p>
         </div>
         <div className="p-6">
@@ -957,8 +957,8 @@ const DailyEntry: React.FC = () => {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Hospital</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Location</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Patient Capacity</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Patients Served</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Beneficiary Capacity</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Beneficiaries Served</th>
                 </tr>
               </thead>
               <tbody>
@@ -966,7 +966,7 @@ const DailyEntry: React.FC = () => {
                   const entry = hospitalEntries[selectedService]?.[hospital.id];
                   if (!entry) return null;
                   
-                  const hasData = entry.patientsServed > 0;
+                  const hasData = entry.beneficiariesServed > 0;
                   
                   return (
                     <tr key={hospital.id} className={`border-b border-gray-100 ${hasData ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}>
@@ -977,14 +977,14 @@ const DailyEntry: React.FC = () => {
                         <div className="text-gray-600">{hospital.location}</div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-gray-600">{hospital.patientCapacity}</div>
+                        <div className="text-gray-600">{hospital.beneficiaryCapacity}</div>
                       </td>
                       <td className="py-3 px-4">
                         <input
                           type="number"
                           min="0"
-                          value={entry.patientsServed || ''}
-                          onChange={(e) => updateHospitalEntry(selectedService, hospital.id, 'patientsServed', parseInt(e.target.value) || 0)}
+                          value={entry.beneficiariesServed || ''}
+                          onChange={(e) => updateHospitalEntry(selectedService, hospital.id, 'beneficiariesServed', parseInt(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="0"
                         />
@@ -1021,7 +1021,7 @@ const DailyEntry: React.FC = () => {
                 RWF {Math.round(calculations.costPerMeal).toLocaleString()}
               </div>
               <div className="text-xs text-green-700 mt-1">
-                Ingredient Cost ÷ Total Patients Served
+                Ingredient Cost ÷ Total Beneficiaries Served
               </div>
             </div>
 
@@ -1046,10 +1046,10 @@ const DailyEntry: React.FC = () => {
             <div className="bg-orange-50 rounded-lg p-4">
               <div className="text-sm text-orange-600 font-medium">Total Service Overhead</div>
               <div className="text-2xl font-bold text-orange-900">
-                RWF {Math.round(calculations.overhead * calculations.totalPatientsServed).toLocaleString()}
+                RWF {Math.round(calculations.overhead * calculations.totalBeneficiariesServed).toLocaleString()}
               </div>
               <div className="text-xs text-orange-700 mt-1">
-                RWF {overheadPerMeal} × {calculations.totalPatientsServed} meals
+                RWF {overheadPerMeal} × {calculations.totalBeneficiariesServed} meals
               </div>
             </div>
           </div>
@@ -1071,14 +1071,14 @@ const DailyEntry: React.FC = () => {
               <div className="font-medium text-gray-900 mb-2">Summary</div>
               <div className="space-y-1 text-gray-700">
                 <div>Total Ingredient Cost: RWF {calculations.totalIngredientCost.toLocaleString()}</div>
-                <div>Total Patients Served: {calculations.totalPatientsServed.toLocaleString()}</div>
+                <div>Total Beneficiaries Served: {calculations.totalBeneficiariesServed.toLocaleString()}</div>
                 <div>Overhead per Meal: RWF {overheadPerMeal.toLocaleString()}</div>
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="font-medium text-gray-900 mb-2">Calculation Breakdown</div>
               <div className="space-y-1 text-gray-700 text-xs">
-                <div>1. Cost per Meal = Ingredient Cost ÷ Total Patients Served</div>
+                <div>1. Cost per Meal = Ingredient Cost ÷ Total Beneficiaries Served</div>
                 <div>2. Overhead = RWF {overheadPerMeal} per meal (fixed)</div>
                 <div>3. Total CPM = Cost per Meal + Overhead</div>
               </div>
