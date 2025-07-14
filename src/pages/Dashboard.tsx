@@ -62,17 +62,13 @@ const Dashboard: React.FC = () => {
       
       // Current week start (Monday)
       const weekStart = new Date(today);
-      const dayOfWeek = today.getDay();
-      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Handle Sunday as 0
-      weekStart.setDate(today.getDate() - daysFromMonday);
-      weekStart.setHours(0, 0, 0, 0);
+      weekStart.setDate(today.getDate() - today.getDay() + 1);
       
       // Last week start and end
       const lastWeekStart = new Date(weekStart);
       lastWeekStart.setDate(weekStart.getDate() - 7);
       const lastWeekEnd = new Date(weekStart);
       lastWeekEnd.setDate(weekStart.getDate() - 1);
-      lastWeekEnd.setHours(23, 59, 59, 999);
       
       // 7 days ago
       const sevenDaysAgo = new Date(today);
@@ -111,11 +107,11 @@ const Dashboard: React.FC = () => {
         // Current week data
         purchasesAPI.getPurchases({
           start_date: weekStart.toISOString(),
-          end_date: todayEnd.toISOString()
+          end_date: today.toISOString()
         }),
         productionAPI.getProductions({
           start_date: weekStart.toISOString(),
-          end_date: todayEnd.toISOString()
+          end_date: today.toISOString()
         }),
         // 7-day data
         purchasesAPI.getPurchases({
@@ -152,18 +148,6 @@ const Dashboard: React.FC = () => {
       const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
       const weekOverhead = weekCostPerMeal * (overheadPercentage / 100);
       const currentWeekCPM = weekCostPerMeal + weekOverhead;
-      
-      // Debug logging
-      console.log('Week calculation debug:', {
-        weekStart: weekStart.toISOString(),
-        todayEnd: todayEnd.toISOString(),
-        weekMeals,
-        weekIngredientCost,
-        weekCostPerMeal,
-        currentWeekCPM,
-        weekPurchasesCount: weekPurchases.length,
-        weekProductionsCount: weekProductions.length
-      });
 
       // Today's hospital contribution
       const hospitalsContribution: Array<{ name: string; meals: number; percentage: number }> = [];
