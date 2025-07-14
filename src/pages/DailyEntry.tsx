@@ -181,11 +181,9 @@ const DailyEntry: React.FC = () => {
       const entriesByDate: { [key: string]: ExistingEntry } = {};
 
       purchases.forEach((purchase: any) => {
-        // Fix timezone issue - extract date properly
+        // Extract date without timezone conversion
         const purchaseDate = new Date(purchase.purchaseDate);
-        const date = purchaseDate.getFullYear() + '-' + 
-                    String(purchaseDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(purchaseDate.getDate()).padStart(2, '0');
+        const date = purchaseDate.toISOString().split('T')[0];
         if (!entriesByDate[date]) {
           entriesByDate[date] = {
             date,
@@ -203,11 +201,9 @@ const DailyEntry: React.FC = () => {
       });
 
       productions.forEach((production: any) => {
-        // Fix timezone issue - extract date properly
+        // Extract date without timezone conversion
         const productionDate = new Date(production.productionDate);
-        const date = productionDate.getFullYear() + '-' + 
-                    String(productionDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(productionDate.getDate()).padStart(2, '0');
+        const date = productionDate.toISOString().split('T')[0];
         if (!entriesByDate[date]) {
           entriesByDate[date] = {
             date,
@@ -252,9 +248,10 @@ const DailyEntry: React.FC = () => {
   const loadEntryForEditing = async (date: string) => {
     try {
       setLoading(true);
-      // Fix timezone issue - use local date without timezone conversion
-      const startDate = new Date(date + 'T00:00:00');
-      const endDate = new Date(date + 'T23:59:59');
+      // Create date range for the selected date only
+      const selectedDateObj = new Date(date);
+      const startDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 0, 0, 0);
+      const endDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 23, 59, 59);
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -349,9 +346,10 @@ const DailyEntry: React.FC = () => {
 
     try {
       setLoading(true);
-      // Fix timezone issue - use local date without timezone conversion
-      const startDate = new Date(date + 'T00:00:00');
-      const endDate = new Date(date + 'T23:59:59');
+      // Create date range for the selected date only
+      const selectedDateObj = new Date(date);
+      const startDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 0, 0, 0);
+      const endDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 23, 59, 59);
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -482,9 +480,10 @@ const DailyEntry: React.FC = () => {
     try {
       // If editing, delete existing data first
       if (editingDate) {
-        // Fix timezone issue - use local date without timezone conversion
-        const startDate = new Date(editingDate + 'T00:00:00');
-        const endDate = new Date(editingDate + 'T23:59:59');
+        // Create date range for the editing date
+        const editDateObj = new Date(editingDate);
+        const startDate = new Date(editDateObj.getFullYear(), editDateObj.getMonth(), editDateObj.getDate(), 0, 0, 0);
+        const endDate = new Date(editDateObj.getFullYear(), editDateObj.getMonth(), editDateObj.getDate(), 23, 59, 59);
 
         const [existingPurchases, existingProductions] = await Promise.all([
           purchasesAPI.getPurchases({
@@ -509,8 +508,9 @@ const DailyEntry: React.FC = () => {
       );
 
       for (const ingredient of validIngredients) {
-        // Fix timezone issue - create date object properly
-        const purchaseDateTime = new Date(selectedDate + 'T12:00:00'); // Use noon to avoid timezone issues
+        // Create date object for the selected date at noon
+        const selectedDateObj = new Date(selectedDate);
+        const purchaseDateTime = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 12, 0, 0);
         const purchaseData = {
           ingredientId: ingredient.ingredientId,
           service: selectedService,
@@ -529,8 +529,9 @@ const DailyEntry: React.FC = () => {
       );
 
       for (const hospital of validHospitals) {
-        // Fix timezone issue - create date object properly
-        const productionDateTime = new Date(selectedDate + 'T12:00:00'); // Use noon to avoid timezone issues
+        // Create date object for the selected date at noon
+        const selectedDateObj = new Date(selectedDate);
+        const productionDateTime = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 12, 0, 0);
         const productionData = {
           hospitalId: hospital.hospitalId,
           service: selectedService,
