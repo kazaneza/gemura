@@ -151,7 +151,6 @@ const UnifiedReports: React.FC = () => {
         const serviceProductions = productions.filter((p: any) => p.service === service);
         
         const totalCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
-        const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.beneficiariesServed || 0), 0);
         
         let cpm = 0;
