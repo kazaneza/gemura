@@ -58,7 +58,7 @@ const DailyEntry: React.FC = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedService, setSelectedService] = useState<MealService>(MealService.BREAKFAST);
-  const [overheadPercentage, setOverheadPercentage] = useState(15);
+  const [overheadPerMeal, setOverheadPerMeal] = useState(50); // Default overhead per meal in RWF
   
   // Changed to store entries by service
   const [ingredientEntries, setIngredientEntries] = useState<{ [service: string]: { [key: string]: IngredientEntry } }>({
@@ -421,7 +421,7 @@ const DailyEntry: React.FC = () => {
       return this.totalPatientsServed > 0 ? this.totalIngredientCost / this.totalPatientsServed : 0;
     },
     get overhead() {
-      return this.costPerMeal * (overheadPercentage / 100);
+      return overheadPerMeal; // Direct overhead per meal
     },
     get totalCostPerMeal() {
       return this.costPerMeal + this.overhead;
@@ -1027,22 +1027,29 @@ const DailyEntry: React.FC = () => {
 
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-purple-600 font-medium">Overhead ({overheadPercentage}%)</div>
+                <div className="text-sm text-purple-600 font-medium">Overhead per Meal</div>
                 <input
                   type="number"
                   min="0"
-                  max="100"
                   step="1"
-                  value={overheadPercentage}
-                  onChange={(e) => setOverheadPercentage(parseInt(e.target.value) || 15)}
-                  className="w-16 px-2 py-1 text-xs border border-purple-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  value={overheadPerMeal}
+                  onChange={(e) => setOverheadPerMeal(parseInt(e.target.value) || 50)}
+                  className="w-20 px-2 py-1 text-xs border border-purple-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
               </div>
-              <div className="text-2xl font-bold text-purple-900">
-                RWF {Math.round(calculations.overhead).toLocaleString()}
-              </div>
+              <div className="text-2xl font-bold text-purple-900">RWF {overheadPerMeal.toLocaleString()}</div>
               <div className="text-xs text-purple-700 mt-1">
-                Cost per Meal × {overheadPercentage}%
+                Fixed overhead per meal
+              </div>
+            </div>
+
+            <div className="bg-orange-50 rounded-lg p-4">
+              <div className="text-sm text-orange-600 font-medium">Total Service Overhead</div>
+              <div className="text-2xl font-bold text-orange-900">
+                RWF {Math.round(calculations.overhead * calculations.totalPatientsServed).toLocaleString()}
+              </div>
+              <div className="text-xs text-orange-700 mt-1">
+                RWF {overheadPerMeal} × {calculations.totalPatientsServed} meals
               </div>
             </div>
           </div>
@@ -1054,7 +1061,7 @@ const DailyEntry: React.FC = () => {
                 RWF {Math.round(calculations.totalCostPerMeal).toLocaleString()}
               </div>
               <div className="text-sm text-red-700 mt-2">
-                Cost per Meal + Overhead = RWF {Math.round(calculations.costPerMeal).toLocaleString()} + RWF {Math.round(calculations.overhead).toLocaleString()}
+                Cost per Meal + Overhead = RWF {Math.round(calculations.costPerMeal).toLocaleString()} + RWF {overheadPerMeal.toLocaleString()}
               </div>
             </div>
           </div>
@@ -1065,14 +1072,14 @@ const DailyEntry: React.FC = () => {
               <div className="space-y-1 text-gray-700">
                 <div>Total Ingredient Cost: RWF {calculations.totalIngredientCost.toLocaleString()}</div>
                 <div>Total Patients Served: {calculations.totalPatientsServed.toLocaleString()}</div>
-                <div>Overhead Rate: {overheadPercentage}%</div>
+                <div>Overhead per Meal: RWF {overheadPerMeal.toLocaleString()}</div>
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="font-medium text-gray-900 mb-2">Calculation Breakdown</div>
               <div className="space-y-1 text-gray-700 text-xs">
                 <div>1. Cost per Meal = Ingredient Cost ÷ Total Patients Served</div>
-                <div>2. Overhead = Cost per Meal × {overheadPercentage}%</div>
+                <div>2. Overhead = RWF {overheadPerMeal} per meal (fixed)</div>
                 <div>3. Total CPM = Cost per Meal + Overhead</div>
               </div>
             </div>

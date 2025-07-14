@@ -25,6 +25,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Import production API for overhead calculations
+export { productionAPI } from './api';
 // Handle auth errors
 api.interceptors.response.use(
   (response) => response,
