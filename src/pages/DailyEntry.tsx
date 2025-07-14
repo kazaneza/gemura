@@ -181,7 +181,11 @@ const DailyEntry: React.FC = () => {
       const entriesByDate: { [key: string]: ExistingEntry } = {};
 
       purchases.forEach((purchase: any) => {
-        const date = new Date(purchase.purchaseDate).toISOString().split('T')[0];
+        // Fix timezone issue - extract date properly
+        const purchaseDate = new Date(purchase.purchaseDate);
+        const date = purchaseDate.getFullYear() + '-' + 
+                    String(purchaseDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(purchaseDate.getDate()).padStart(2, '0');
         if (!entriesByDate[date]) {
           entriesByDate[date] = {
             date,
@@ -199,7 +203,11 @@ const DailyEntry: React.FC = () => {
       });
 
       productions.forEach((production: any) => {
-        const date = new Date(production.productionDate).toISOString().split('T')[0];
+        // Fix timezone issue - extract date properly
+        const productionDate = new Date(production.productionDate);
+        const date = productionDate.getFullYear() + '-' + 
+                    String(productionDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(productionDate.getDate()).padStart(2, '0');
         if (!entriesByDate[date]) {
           entriesByDate[date] = {
             date,
@@ -244,9 +252,9 @@ const DailyEntry: React.FC = () => {
   const loadEntryForEditing = async (date: string) => {
     try {
       setLoading(true);
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
+      // Fix timezone issue - use local date without timezone conversion
+      const startDate = new Date(date + 'T00:00:00');
+      const endDate = new Date(date + 'T23:59:59');
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -341,9 +349,9 @@ const DailyEntry: React.FC = () => {
 
     try {
       setLoading(true);
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
+      // Fix timezone issue - use local date without timezone conversion
+      const startDate = new Date(date + 'T00:00:00');
+      const endDate = new Date(date + 'T23:59:59');
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -474,9 +482,9 @@ const DailyEntry: React.FC = () => {
     try {
       // If editing, delete existing data first
       if (editingDate) {
-        const startDate = new Date(editingDate);
-        const endDate = new Date(editingDate);
-        endDate.setDate(endDate.getDate() + 1);
+        // Fix timezone issue - use local date without timezone conversion
+        const startDate = new Date(editingDate + 'T00:00:00');
+        const endDate = new Date(editingDate + 'T23:59:59');
 
         const [existingPurchases, existingProductions] = await Promise.all([
           purchasesAPI.getPurchases({
@@ -501,10 +509,12 @@ const DailyEntry: React.FC = () => {
       );
 
       for (const ingredient of validIngredients) {
+        // Fix timezone issue - create date object properly
+        const purchaseDateTime = new Date(selectedDate + 'T12:00:00'); // Use noon to avoid timezone issues
         const purchaseData = {
           ingredientId: ingredient.ingredientId,
           service: selectedService,
-          purchaseDate: new Date(selectedDate).toISOString(),
+          purchaseDate: purchaseDateTime.toISOString(),
           quantity: ingredient.quantity,
           unitPrice: ingredient.unitPrice,
           totalPrice: ingredient.totalPrice,
@@ -519,10 +529,12 @@ const DailyEntry: React.FC = () => {
       );
 
       for (const hospital of validHospitals) {
+        // Fix timezone issue - create date object properly
+        const productionDateTime = new Date(selectedDate + 'T12:00:00'); // Use noon to avoid timezone issues
         const productionData = {
           hospitalId: hospital.hospitalId,
           service: selectedService,
-          productionDate: new Date(selectedDate).toISOString(),
+          productionDate: productionDateTime.toISOString(),
           patientsServed: hospital.patientsServed,
           weekId: 'temp-week-id'
         };
