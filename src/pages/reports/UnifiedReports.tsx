@@ -10,7 +10,6 @@ interface ServiceCPMData {
   cpm: number;
   averageCPM: number;
   totalMeals: number;
-  totalCost: number;
 }
 
 const UnifiedReports: React.FC = () => {
@@ -168,8 +167,7 @@ const UnifiedReports: React.FC = () => {
           service,
           cpm: Math.round(cpm),
           averageCPM: Math.round(averageCPM),
-          totalMeals,
-          totalCost
+          totalMeals
         });
 
         grandTotalMeals += totalMeals;

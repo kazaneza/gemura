@@ -73,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       show: canAccessRoute(user.role, '/reports/weekly'),
       children: [
         { 
-          name: 'All Reports', 
+          name: 'Reports', 
           href: '/reports', 
           icon: FileText, 
           current: location.pathname === '/reports',
