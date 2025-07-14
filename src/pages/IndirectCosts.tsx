@@ -212,7 +212,7 @@ const IndirectCosts: React.FC = () => {
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Monthly Indirect Costs
+            Monthly Overheads
           </h2>
           <p className="mt-1 text-sm text-gray-500">
             Track operational expenses and overhead costs for {currentMonthInfo.monthName}
@@ -223,7 +223,7 @@ const IndirectCosts: React.FC = () => {
             {monthStatus.statusText} Month
           </span>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="text-sm text-red-600">Total Indirect Costs</div>
+            <div className="text-sm text-red-600">Total Overheads</div>
             <div className="text-2xl font-bold text-red-700">RWF {totalIndirectCosts.toLocaleString()}</div>
           </div>
         </div>
@@ -276,7 +276,7 @@ const IndirectCosts: React.FC = () => {
       {/* Add New Cost Form */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Add New Indirect Cost</h3>
+          <h3 className="text-lg font-medium text-gray-900">Add New Overhead</h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -336,7 +336,7 @@ const IndirectCosts: React.FC = () => {
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 transition-colors duration-200"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {loading ? 'Adding...' : 'Add Cost'}
+              {loading ? 'Adding...' : 'Add Overhead'}
             </button>
           </div>
         </div>
@@ -346,13 +346,13 @@ const IndirectCosts: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">
-            Indirect Costs for {currentMonthInfo.monthName}
+            Overheads for {currentMonthInfo.monthName}
           </h3>
         </div>
         <div className="p-6">
           {costs.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No indirect costs recorded for this month
+              No overheads recorded for this month
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -486,7 +486,7 @@ const IndirectCosts: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">RWF {totalIndirectCosts.toLocaleString()}</div>
-              <div className="text-sm text-gray-500">Total Indirect Costs</div>
+              <div className="text-sm text-gray-500">Total Overheads</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{totalMealsForMonth.toLocaleString()}</div>
@@ -508,7 +508,7 @@ const IndirectCosts: React.FC = () => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h4 className="text-sm font-medium text-blue-900 mb-2">Calculation Breakdown:</h4>
               <div className="text-sm text-blue-800">
-                <div>Total Indirect Costs: RWF {totalIndirectCosts.toLocaleString()}</div>
+                <div>Total Overheads: RWF {totalIndirectCosts.toLocaleString()}</div>
                 <div>Total Meals Produced: {totalMealsForMonth.toLocaleString()}</div>
                 <div className="font-medium mt-1">
                   Overhead per Meal: RWF {totalIndirectCosts.toLocaleString()} ÷ {totalMealsForMonth.toLocaleString()} = RWF {Math.round(overheadPerMeal).toLocaleString()}

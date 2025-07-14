@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           show: canAccessRoute(user.role, '/daily')
         },
         { 
-          name: 'Indirect Costs', 
+          name: 'Overheads', 
           href: '/indirect-costs', 
           icon: FileText, 
           current: location.pathname === '/indirect-costs',
