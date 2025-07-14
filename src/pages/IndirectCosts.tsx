@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Save, X, Check, AlertCircle } from 'lucide-react';
-import { indirectCostsAPI } from '../services/api';
+import { indirectCostsAPI, productionAPI } from '../services/api';
 import MonthSelector from '../components/MonthSelector';
 import { generateAvailableMonths, getCurrentMonth, getMonthId, parseMonthId, getMonthStatus } from '../utils/monthlySystem';
 
@@ -39,8 +39,8 @@ const IndirectCosts: React.FC = () => {
   const currentMonthInfo = parseMonthId(selectedMonth);
   const monthStatus = getMonthStatus(currentMonthInfo);
 
-  // Sample total meals for overhead calculation (this would come from production data)
-  const [totalMealsForMonth] = useState(13800);
+  // Get total meals for the month from production data
+  const [totalMealsForMonth, setTotalMealsForMonth] = useState(0);
 
   const categories = [
     'PC Staff Salaries',
@@ -57,6 +57,7 @@ const IndirectCosts: React.FC = () => {
 
   useEffect(() => {
     loadIndirectCosts();
+    loadMonthlyMeals();
   }, [selectedMonth]);
 
   const loadIndirectCosts = async () => {
@@ -77,14 +78,36 @@ const IndirectCosts: React.FC = () => {
     }
   };
 
+  const loadMonthlyMeals = async () => {
+    try {
+      const monthInfo = parseMonthId(selectedMonth);
+      
+      // Get start and end of month
+      const startDate = new Date(monthInfo.year, monthInfo.month - 1, 1);
+      const endDate = new Date(monthInfo.year, monthInfo.month, 0);
+      endDate.setDate(endDate.getDate() + 1);
+
+      const productions = await productionAPI.getProductions({
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
+
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      setTotalMealsForMonth(totalMeals);
+    } catch (err: any) {
+      console.error('Failed to load monthly meals:', err);
+      setTotalMealsForMonth(0);
+    }
+  };
+
   const showSuccess = (message: string) => {
     setSuccess(message);
     setTimeout(() => setSuccess(null), 3000);
   };
 
   // Calculate totals
-  const totalIndirectCosts = costs.reduce((sum, cost) => sum + cost.amount, 0);
-  const overheadPerMeal = totalMealsForMonth > 0 ? totalIndirectCosts / totalMealsForMonth : 0;
+  const totalOverheadPerMeal = costs.reduce((sum, cost) => sum + cost.amount, 0);
+  const totalOverheads = totalOverheadPerMeal * totalMealsForMonth;
 
   // Validate form
   const validateForm = () => {
@@ -224,7 +247,7 @@ const IndirectCosts: React.FC = () => {
           </span>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="text-sm text-red-600">Total Overheads</div>
-            <div className="text-2xl font-bold text-red-700">RWF {totalIndirectCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-700">RWF {totalOverheads.toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -317,15 +340,16 @@ const IndirectCosts: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Amount (RWF)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount (RWF per meal)</label>
               <input
                 type="number"
-                step="1"
+                step="0.01"
                 value={newCost.amount}
                 onChange={(e) => setNewCost({ ...newCost, amount: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                placeholder="0"
+                placeholder="0.00"
               />
+              <div className="text-xs text-gray-500 mt-1">Enter cost per 1 meal</div>
             </div>
           </div>
           
@@ -362,7 +386,8 @@ const IndirectCosts: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Per Meal (RWF)</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total (RWF)</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -415,13 +440,21 @@ const IndirectCosts: React.FC = () => {
                         {editingId === cost.id ? (
                           <input
                             type="number"
-                            step="1"
+                            step="0.01"
                             value={editingCost?.amount || ''}
                             onChange={(e) => updateEditingCost('amount', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-500"
                           />
                         ) : (
-                          <span className="text-sm font-medium text-gray-900">RWF {cost.amount.toLocaleString()}</span>
+                          <span className="text-sm font-medium text-gray-900">RWF {cost.amount.toFixed(2)}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-blue-600">
+                          RWF {(cost.amount * totalMealsForMonth).toLocaleString()}
+                        </span>
+                        {totalMealsForMonth === 0 && (
+                          <div className="text-xs text-gray-500">No meals data</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -461,6 +494,14 @@ const IndirectCosts: React.FC = () => {
                     </tr>
                   ))}
                 </tbody>
+                <tfoot className="bg-gray-100">
+                  <tr>
+                    <td className="py-3 px-4" colSpan={3}>Total Overhead Production costs</td>
+                    <td className="py-3 px-4 text-right font-bold">RWF {totalOverheadPerMeal.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right font-bold">RWF {totalOverheads.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right">100%</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
@@ -468,9 +509,15 @@ const IndirectCosts: React.FC = () => {
           {/* Running Total */}
           {costs.length > 0 && (
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-medium text-gray-900">Total for {currentMonthInfo.monthName}:</span>
-                <span className="text-2xl font-bold text-red-600">RWF {totalIndirectCosts.toLocaleString()}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Total Per Meal:</span>
+                  <span className="text-lg font-bold text-blue-600">RWF {totalOverheadPerMeal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Total Overheads:</span>
+                  <span className="text-lg font-bold text-red-600">RWF {totalOverheads.toLocaleString()}</span>
+                </div>
               </div>
             </div>
           )}
@@ -480,13 +527,13 @@ const IndirectCosts: React.FC = () => {
       {/* Overhead Per Meal Calculation */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Overhead Per Meal Calculation</h3>
+          <h3 className="text-lg font-medium text-gray-900">Overhead Calculation Summary</h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">RWF {totalIndirectCosts.toLocaleString()}</div>
-              <div className="text-sm text-gray-500">Total Overheads</div>
+              <div className="text-2xl font-bold text-blue-600">RWF {totalOverheadPerMeal.toFixed(2)}</div>
+              <div className="text-sm text-gray-500">Total Per Meal</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{totalMealsForMonth.toLocaleString()}</div>
@@ -494,28 +541,24 @@ const IndirectCosts: React.FC = () => {
               <div className="text-xs text-gray-400 mt-1">(from production data)</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {totalMealsForMonth > 0 ? `RWF ${Math.round(overheadPerMeal).toLocaleString()}` : 'N/A'}
-              </div>
-              <div className="text-sm text-gray-500">Overhead per Meal</div>
+              <div className="text-2xl font-bold text-red-600">RWF {totalOverheads.toLocaleString()}</div>
+              <div className="text-sm text-gray-500">Total Overheads</div>
               <div className="text-xs text-gray-400 mt-1">
-                {totalMealsForMonth > 0 ? 'Indirect costs ÷ Total meals' : 'No meal data available'}
+                Per meal × Total meals
               </div>
             </div>
           </div>
 
-          {totalMealsForMonth > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">Calculation Breakdown:</h4>
-              <div className="text-sm text-blue-800">
-                <div>Total Overheads: RWF {totalIndirectCosts.toLocaleString()}</div>
-                <div>Total Meals Produced: {totalMealsForMonth.toLocaleString()}</div>
-                <div className="font-medium mt-1">
-                  Overhead per Meal: RWF {totalIndirectCosts.toLocaleString()} ÷ {totalMealsForMonth.toLocaleString()} = RWF {Math.round(overheadPerMeal).toLocaleString()}
-                </div>
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <h4 className="text-sm font-medium text-green-900 mb-2">New Calculation Method:</h4>
+            <div className="text-sm text-green-800">
+              <div>Total Per Meal: RWF {totalOverheadPerMeal.toFixed(2)}</div>
+              <div>Total Meals Produced: {totalMealsForMonth.toLocaleString()}</div>
+              <div className="font-medium mt-1">
+                Total Overheads: RWF {totalOverheadPerMeal.toFixed(2)} × {totalMealsForMonth.toLocaleString()} = RWF {totalOverheads.toLocaleString()}
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
