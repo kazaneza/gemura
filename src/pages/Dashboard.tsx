@@ -12,15 +12,10 @@ import {
 import { purchasesAPI, productionAPI, hospitalsAPI } from '../services/api';
 
 interface DashboardData {
-  yesterdayMeals: number;
-  weekToDateMeals: number;
+  lastWeekCPM: number;
   currentWeekCPM: number;
-  monthToDateAvgCPM: number;
-  schoolsContribution: Array<{
-    name: string;
-    meals: number;
-    percentage: number;
-  }>;
+  todayCPM: number;
+  todayMeals: number;
   hospitalsContribution: Array<{
     name: string;
     meals: number;
@@ -38,11 +33,10 @@ interface DashboardData {
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
-    yesterdayMeals: 0,
-    weekToDateMeals: 0,
+    lastWeekCPM: 0,
     currentWeekCPM: 0,
-    monthToDateAvgCPM: 0,
-    schoolsContribution: [],
+    todayCPM: 0,
+    todayMeals: 0,
     hospitalsContribution: [],
     sevenDayTrend: [],
     monthCPMTrend: []
@@ -61,15 +55,20 @@ const Dashboard: React.FC = () => {
       
       // Get date ranges
       const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
+      const todayStart = new Date(today);
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(today);
+      todayEnd.setHours(23, 59, 59, 999);
       
-      // Week start (Monday)
+      // Current week start (Monday)
       const weekStart = new Date(today);
       weekStart.setDate(today.getDate() - today.getDay() + 1);
       
-      // Month start
-      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      // Last week start and end
+      const lastWeekStart = new Date(weekStart);
+      lastWeekStart.setDate(weekStart.getDate() - 7);
+      const lastWeekEnd = new Date(weekStart);
+      lastWeekEnd.setDate(weekStart.getDate() - 1);
       
       // 7 days ago
       const sevenDaysAgo = new Date(today);
@@ -77,41 +76,41 @@ const Dashboard: React.FC = () => {
 
       // Client-side aggregation - fetch raw data
       const [
-        yesterdayPurchases,
-        yesterdayProductions,
+        todayPurchases,
+        todayProductions,
+        lastWeekPurchases,
+        lastWeekProductions,
         weekPurchases,
         weekProductions,
-        monthPurchases,
-        monthProductions,
         sevenDayPurchases,
         sevenDayProductions,
         hospitals
       ] = await Promise.all([
-        // Yesterday data
+        // Today data
         purchasesAPI.getPurchases({
-          start_date: yesterday.toISOString(),
-          end_date: today.toISOString()
+          start_date: todayStart.toISOString(),
+          end_date: todayEnd.toISOString()
         }),
         productionAPI.getProductions({
-          start_date: yesterday.toISOString(),
-          end_date: today.toISOString()
+          start_date: todayStart.toISOString(),
+          end_date: todayEnd.toISOString()
         }),
-        // Week data
+        // Last week data
+        purchasesAPI.getPurchases({
+          start_date: lastWeekStart.toISOString(),
+          end_date: lastWeekEnd.toISOString()
+        }),
+        productionAPI.getProductions({
+          start_date: lastWeekStart.toISOString(),
+          end_date: lastWeekEnd.toISOString()
+        }),
+        // Current week data
         purchasesAPI.getPurchases({
           start_date: weekStart.toISOString(),
           end_date: today.toISOString()
         }),
         productionAPI.getProductions({
           start_date: weekStart.toISOString(),
-          end_date: today.toISOString()
-        }),
-        // Month data
-        purchasesAPI.getPurchases({
-          start_date: monthStart.toISOString(),
-          end_date: today.toISOString()
-        }),
-        productionAPI.getProductions({
-          start_date: monthStart.toISOString(),
           end_date: today.toISOString()
         }),
         // 7-day data
@@ -123,41 +122,39 @@ const Dashboard: React.FC = () => {
           start_date: sevenDaysAgo.toISOString(),
           end_date: today.toISOString()
         }),
-        // Schools for contribution calculation
         // Hospitals for contribution calculation
         hospitalsAPI.getHospitals()
       ]);
 
       // Calculate metrics using same logic as Daily Entry (pax not mealsCalculated)
       
-      // Yesterday's meals (using beneficiaries)
-      const yesterdayMeals = yesterdayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      // Today's meals and CPM
+      const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const todayCostPerMeal = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
+      const todayOverhead = todayCostPerMeal * (overheadPercentage / 100);
+      const todayCPM = todayCostPerMeal + todayOverhead;
       
-      // Week-to-date meals
-      const weekToDateMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      
-      // Week purchases for CPM calculation
-      const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      // Last week CPM
+      const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const lastWeekCostPerMeal = lastWeekMeals > 0 ? lastWeekIngredientCost / lastWeekMeals : 0;
+      const lastWeekOverhead = lastWeekCostPerMeal * (overheadPercentage / 100);
+      const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       
       // Current week CPM
-      const weekCostPerMeal = weekToDateMeals > 0 ? weekIngredientCost / weekToDateMeals : 0;
+      const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
       const weekOverhead = weekCostPerMeal * (overheadPercentage / 100);
       const currentWeekCPM = weekCostPerMeal + weekOverhead;
-      
-      // Month-to-date calculations
-      const monthMeals = monthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      const monthIngredientCost = monthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      
-      const monthCostPerMeal = monthMeals > 0 ? monthIngredientCost / monthMeals : 0;
-      const monthOverhead = monthCostPerMeal * (overheadPercentage / 100);
-      const monthToDateAvgCPM = monthCostPerMeal + monthOverhead;
 
-      // Yesterday's school contribution
+      // Today's hospital contribution
       const hospitalsContribution: Array<{ name: string; meals: number; percentage: number }> = [];
-      if (yesterdayMeals > 0) {
+      if (todayMeals > 0) {
         const hospitalMeals: { [key: string]: { meals: number; hospital: any } } = {};
         
-        yesterdayProductions.forEach((production: any) => {
+        todayProductions.forEach((production: any) => {
           const hospitalId = production.hospitalId;
           if (!hospitalMeals[hospitalId]) {
             hospitalMeals[hospitalId] = {
@@ -170,7 +167,7 @@ const Dashboard: React.FC = () => {
         
         Object.values(hospitalMeals).forEach(({ meals, hospital }) => {
           if (hospital && meals > 0) {
-            const percentage = (meals / yesterdayMeals) * 100;
+            const percentage = (meals / todayMeals) * 100;
             hospitalsContribution.push({
               name: hospital.name,
               meals,
@@ -231,11 +228,10 @@ const Dashboard: React.FC = () => {
       }
 
       setDashboardData({
-        yesterdayMeals,
-        weekToDateMeals,
+        lastWeekCPM: Math.round(lastWeekCPM),
         currentWeekCPM: Math.round(currentWeekCPM),
-        monthToDateAvgCPM: Math.round(monthToDateAvgCPM),
-        schoolsContribution: [],
+        todayCPM: Math.round(todayCPM),
+        todayMeals,
         hospitalsContribution,
         sevenDayTrend,
         monthCPMTrend
@@ -296,38 +292,16 @@ const Dashboard: React.FC = () => {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                  <Users className="h-5 w-5 text-blue-600" />
+                <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
                 </div>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Yesterday's Meals Served</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Last Week CPM</dt>
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
-                      {dashboardData.yesterdayMeals.toLocaleString()}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Week-to-Date Meals</dt>
-                  <dd>
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {dashboardData.weekToDateMeals.toLocaleString()}
+                      RWF {dashboardData.lastWeekCPM.toLocaleString()}
                     </div>
                   </dd>
                 </dl>
@@ -362,16 +336,38 @@ const Dashboard: React.FC = () => {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
-                  <Calculator className="h-5 w-5 text-purple-600" />
+                <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                  <Calculator className="h-5 w-5 text-green-600" />
                 </div>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Month-to-Date Avg CPM</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Today CPM</dt>
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
-                      RWF {dashboardData.monthToDateAvgCPM.toLocaleString()}
+                      RWF {dashboardData.todayCPM.toLocaleString()}
+                    </div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Meals for Today</dt>
+                  <dd>
+                    <div className="text-2xl font-semibold text-gray-900">
+                      {dashboardData.todayMeals.toLocaleString()}
                     </div>
                   </dd>
                 </dl>
@@ -493,10 +489,10 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Hospitals Contribution Yesterday */}
+        {/* Hospitals Contribution Today */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Yesterday's Hospital Contribution</h3>
+            <h3 className="text-lg font-medium text-gray-900">Today's Hospital Contribution</h3>
           </div>
           <div className="p-6">
             {dashboardData.hospitalsContribution.length === 0 ? (
@@ -535,8 +531,8 @@ const Dashboard: React.FC = () => {
           <div>
             <h4 className="text-blue-900 font-medium">Real-Time Dashboard</h4>
             <p className="text-blue-800 text-sm mt-1">
-              This dashboard uses real-time client-side aggregation for accurate data. 
-              All calculations use the same "pax not patientsServed" logic as Daily Entry with {overheadPercentage}% overhead.
+              Showing the 4 key metrics: Last Week CPM, Current Week CPM, Today CPM, and Total Meals for Today. 
+              All calculations use real-time data with {overheadPercentage}% overhead.
             </p>
           </div>
         </div>
