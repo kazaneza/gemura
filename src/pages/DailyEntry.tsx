@@ -249,9 +249,9 @@ const DailyEntry: React.FC = () => {
     try {
       setLoading(true);
       // Create date range for the selected date only
-      const selectedDateObj = new Date(date);
-      const startDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 0, 0, 0);
-      const endDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 23, 59, 59);
+      const [year, month, day] = date.split('-').map(Number);
+      const startDate = new Date(year, month - 1, day, 0, 0, 0); // month is 0-indexed in JS
+      const endDate = new Date(year, month - 1, day, 23, 59, 59); // month is 0-indexed in JS
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -347,9 +347,9 @@ const DailyEntry: React.FC = () => {
     try {
       setLoading(true);
       // Create date range for the selected date only
-      const selectedDateObj = new Date(date);
-      const startDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 0, 0, 0);
-      const endDate = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 23, 59, 59);
+      const [year, month, day] = date.split('-').map(Number);
+      const startDate = new Date(year, month - 1, day, 0, 0, 0); // month is 0-indexed in JS
+      const endDate = new Date(year, month - 1, day, 23, 59, 59); // month is 0-indexed in JS
 
       const [purchases, productions] = await Promise.all([
         purchasesAPI.getPurchases({
@@ -481,9 +481,9 @@ const DailyEntry: React.FC = () => {
       // If editing, delete existing data first
       if (editingDate) {
         // Create date range for the editing date
-        const editDateObj = new Date(editingDate);
-        const startDate = new Date(editDateObj.getFullYear(), editDateObj.getMonth(), editDateObj.getDate(), 0, 0, 0);
-        const endDate = new Date(editDateObj.getFullYear(), editDateObj.getMonth(), editDateObj.getDate(), 23, 59, 59);
+        const [year, month, day] = editingDate.split('-').map(Number);
+        const startDate = new Date(year, month - 1, day, 0, 0, 0); // month is 0-indexed in JS
+        const endDate = new Date(year, month - 1, day, 23, 59, 59); // month is 0-indexed in JS
 
         const [existingPurchases, existingProductions] = await Promise.all([
           purchasesAPI.getPurchases({
@@ -508,9 +508,9 @@ const DailyEntry: React.FC = () => {
       );
 
       for (const ingredient of validIngredients) {
-        // Create date object for the selected date at noon
-        const selectedDateObj = new Date(selectedDate);
-        const purchaseDateTime = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 12, 0, 0);
+        // Create date object for the selected date at noon - fix the minus 1 issue
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const purchaseDateTime = new Date(year, month - 1, day, 12, 0, 0); // month is 0-indexed in JS
         const purchaseData = {
           ingredientId: ingredient.ingredientId,
           service: selectedService,
@@ -529,9 +529,9 @@ const DailyEntry: React.FC = () => {
       );
 
       for (const hospital of validHospitals) {
-        // Create date object for the selected date at noon
-        const selectedDateObj = new Date(selectedDate);
-        const productionDateTime = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 12, 0, 0);
+        // Create date object for the selected date at noon - fix the minus 1 issue
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const productionDateTime = new Date(year, month - 1, day, 12, 0, 0); // month is 0-indexed in JS
         const productionData = {
           hospitalId: hospital.hospitalId,
           service: selectedService,
