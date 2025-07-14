@@ -147,8 +147,6 @@ const Dashboard: React.FC = () => {
       const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
       const weekOverhead = 50; // Fixed RWF 50 per meal overhead
-      const lastWeekOverhead = 50; // Fixed RWF 50 per meal overhead
-      const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       const currentWeekCPM = weekCostPerMeal + weekOverhead;
 
       // Today's hospital contribution
