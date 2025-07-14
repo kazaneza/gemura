@@ -73,25 +73,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       show: canAccessRoute(user.role, '/reports/weekly'),
       children: [
         { 
-          name: 'Daily Report', 
-          href: '/reports/daily', 
+          name: 'All Reports', 
+          href: '/reports', 
           icon: FileText, 
-          current: location.pathname === '/reports/daily',
+          current: location.pathname === '/reports',
           show: canAccessRoute(user.role, '/reports/weekly')
-        },
-        { 
-          name: 'Weekly Report', 
-          href: '/reports/weekly', 
-          icon: FileText, 
-          current: location.pathname === '/reports/weekly',
-          show: canAccessRoute(user.role, '/reports/weekly')
-        },
-        { 
-          name: 'Monthly Report', 
-          href: '/reports/monthly', 
-          icon: FileText, 
-          current: location.pathname === '/reports/monthly',
-          show: canAccessRoute(user.role, '/reports/monthly')
         },
       ].filter(item => item.show),
     },

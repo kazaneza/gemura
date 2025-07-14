@@ -9,9 +9,7 @@ import UserProfile from './components/auth/UserProfile';
 import Dashboard from './pages/Dashboard';
 import DailyEntry from './pages/DailyEntry';
 import IndirectCosts from './pages/IndirectCosts';
-import DailyReport from './pages/reports/DailyReport';
-import WeeklyReport from './pages/reports/WeeklyReport';
-import MonthlyReport from './pages/reports/MonthlyReport';
+import UnifiedReports from './pages/reports/UnifiedReports';
 import Hospitals from './pages/settings/Hospitals';
 import Ingredients from './pages/settings/Ingredients';
 import UserManagement from './pages/admin/UserManagement';
@@ -49,19 +47,9 @@ const AppContent: React.FC = () => {
             <IndirectCosts />
           </ProtectedRoute>
         } />
-        <Route path="/reports/daily" element={
-          <ProtectedRoute route="/reports/daily">
-            <DailyReport />
-          </ProtectedRoute>
-        } />
-        <Route path="/reports/weekly" element={
+        <Route path="/reports" element={
           <ProtectedRoute route="/reports/weekly">
-            <WeeklyReport />
-          </ProtectedRoute>
-        } />
-        <Route path="/reports/monthly" element={
-          <ProtectedRoute route="/reports/monthly">
-            <MonthlyReport />
+            <UnifiedReports />
           </ProtectedRoute>
         } />
         <Route path="/settings/hospitals" element={
