@@ -10,6 +10,7 @@ interface ServiceCPMData {
   totalCost: number;
   totalMeals: number;
   cpm: number;
+  totalCPM: number;
 }
 
 const UnifiedReports: React.FC = () => {
@@ -150,6 +151,13 @@ const UnifiedReports: React.FC = () => {
       services.forEach(service => {
         const servicePurchases = purchases.filter((p: any) => p.service === service);
         const serviceProductions = productions.filter((p: any) => p.service === service);
+        
+        const totalCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
+        const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
+        
+        const cpm = totalMeals > 0 ? totalCost / totalMeals : 0;
+        const totalCPM = totalMeals > 0 ? cpm + overheadPerMeal : 0;
+        
         serviceData.push({
           service,
           totalCost,
@@ -157,6 +165,9 @@ const UnifiedReports: React.FC = () => {
           cpm: Math.round(cpm),
           totalCPM: Math.round(totalCPM)
         });
+        
+        grandTotalMeals += totalMeals;
+      });
 
       setServiceCPMData(serviceData);
       setTotalMeals(grandTotalMeals);
@@ -208,15 +219,14 @@ const UnifiedReports: React.FC = () => {
       ]);
       
       // Calculate overhead per meal from last month
-      const totalCPM = totalMeals > 0 ? Math.round(cpm + overheadPerMeal) : 0;
+      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
       console.log('UnifiedReports - Last month overhead calculation:', {
         totalOverheadAmount,
         totalMeals,
         month: lastMonth.getMonth() + 1,
-        cpm: Math.round(cpm),
-        totalCPM
+        year: lastMonth.getFullYear()
       });
       
       const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
