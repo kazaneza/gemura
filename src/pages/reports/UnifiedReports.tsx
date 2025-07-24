@@ -119,14 +119,8 @@ const UnifiedReports: React.FC = () => {
           break;
 
         case 'annual':
-          startDate = new Date(selectedYear, 0, 1);
-          endDate = new Date(selectedYear + 1, 0, 1);
-          title = `Annual Report - ${selectedYear}`;
-          break;
-
-        default:
-          return;
-      }
+      const cpm = totalMeals > 0 ? totalCost / totalMeals : 0;
+      const totalCPM = totalMeals > 0 ? cpm + overheadPerMeal : 0;
 
       setReportTitle(title);
 
@@ -170,8 +164,8 @@ const UnifiedReports: React.FC = () => {
           cpm: Math.round(cpm),
           totalCPM: Math.round(totalCPM),
         });
-
-        grandTotalMeals += totalMeals;
+        cpm: Math.round(cpm),
+        totalCPM: Math.round(totalCPM)
       });
 
       setServiceCPMData(serviceData);
