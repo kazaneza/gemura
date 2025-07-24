@@ -260,6 +260,63 @@ const Dashboard: React.FC = () => {
 
       </div>
 
+      {/* 7-Day Meal Trend */}
+      <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div className="p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">7-Day Meal Trend</h3>
+          <div className="space-y-3">
+            {/* This would be replaced with actual chart library in production */}
+            <div className="text-sm text-gray-600">
+              Visual trend chart would be displayed here showing daily meal counts for the last 7 days.
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                <div key={day} className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">{day}</div>
+                  <div className="bg-red-100 rounded h-16 flex items-end justify-center">
+                    <div 
+                      className="bg-red-600 rounded-sm w-full"
+                      style={{ height: `${Math.random() * 80 + 20}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-700 mt-1">
+                    {Math.floor(Math.random() * 1000 + 500)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly CPM Trend */}
+      <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div className="p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly CPM Trend</h3>
+          <div className="space-y-3">
+            <div className="text-sm text-gray-600">
+              CPM trend over the last 5 weeks showing cost per meal progression.
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {['W1', 'W2', 'W3', 'W4', 'Current'].map((week, index) => (
+                <div key={week} className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">{week}</div>
+                  <div className="bg-blue-100 rounded h-20 flex items-end justify-center">
+                    <div 
+                      className="bg-blue-600 rounded-sm w-full"
+                      style={{ height: `${Math.random() * 70 + 30}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-700 mt-1">
+                    RWF {Math.floor(Math.random() * 50 + 200)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };
