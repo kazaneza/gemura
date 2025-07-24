@@ -1,45 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { 
-  ShoppingCart, 
-  Factory, 
-  FileText, 
   Users, 
-  Calendar,
   BarChart3,
   Calculator
 } from 'lucide-react';
-import { purchasesAPI, productionAPI, hospitalsAPI } from '../services/api';
+import { purchasesAPI, productionAPI, indirectCostsAPI } from '../services/api';
 
 interface DashboardData {
+  lastMonthCPM: number;
   lastWeekCPM: number;
-  currentWeekCPM: number;
   todayCPM: number;
+  lastMonthMeals: number;
+  lastWeekMeals: number;
   todayMeals: number;
-  hospitalsContribution: Array<{
-    name: string;
-    meals: number;
-    percentage: number;
-  }>;
-  sevenDayTrend: Array<{
-    date: string;
-    meals: number;
-  }>;
-  monthCPMTrend: Array<{
-    week: string;
-    cpm: number;
-  }>;
 }
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
+    lastMonthCPM: 0,
     lastWeekCPM: 0,
-    currentWeekCPM: 0,
     todayCPM: 0,
+    lastMonthMeals: 0,
+    lastWeekMeals: 0,
     todayMeals: 0,
-    hospitalsContribution: [],
-    sevenDayTrend: [],
-    monthCPMTrend: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +30,6 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboardData();
-    loadLastMonthOverhead();
   }, []);
 
   const loadDashboardData = async () => {
@@ -61,31 +43,26 @@ const Dashboard: React.FC = () => {
       const todayEnd = new Date(today);
       todayEnd.setHours(23, 59, 59, 999);
       
-      // Current week start (Monday)
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay() + 1);
-      
       // Last week start and end
-      const lastWeekStart = new Date(weekStart);
-      lastWeekStart.setDate(weekStart.getDate() - 7);
-      const lastWeekEnd = new Date(weekStart);
-      lastWeekEnd.setDate(weekStart.getDate() - 1);
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay() - 6); // Last Monday
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // Last Sunday
       
-      // 7 days ago
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(today.getDate() - 6);
+      // Last month start and end
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+      
 
-      // Client-side aggregation - fetch raw data
+      // Fetch data for all periods
       const [
         todayPurchases,
         todayProductions,
         lastWeekPurchases,
         lastWeekProductions,
-        weekPurchases,
-        weekProductions,
-        sevenDayPurchases,
-        sevenDayProductions,
-        hospitals
+        lastMonthPurchases,
+        lastMonthProductions,
+        lastMonthIndirectCosts
       ] = await Promise.all([
         // Today data
         purchasesAPI.getPurchases({
@@ -98,144 +75,61 @@ const Dashboard: React.FC = () => {
         }),
         // Last week data
         purchasesAPI.getPurchases({
-          start_date: lastWeekStart.toISOString(),
-          end_date: lastWeekEnd.toISOString()
-        }),
-        productionAPI.getProductions({
-          start_date: lastWeekStart.toISOString(),
-          end_date: lastWeekEnd.toISOString()
-        }),
-        // Current week data
-        purchasesAPI.getPurchases({
           start_date: weekStart.toISOString(),
-          end_date: today.toISOString()
+          end_date: weekEnd.toISOString()
         }),
         productionAPI.getProductions({
           start_date: weekStart.toISOString(),
-          end_date: today.toISOString()
+          end_date: weekEnd.toISOString()
         }),
-        // 7-day data
+        // Last month data
         purchasesAPI.getPurchases({
-          start_date: sevenDaysAgo.toISOString(),
-          end_date: today.toISOString()
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
         }),
         productionAPI.getProductions({
-          start_date: sevenDaysAgo.toISOString(),
-          end_date: today.toISOString()
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
         }),
-        // Hospitals for contribution calculation
-        hospitalsAPI.getHospitals()
+        // Last month indirect costs
+        indirectCostsAPI.getIndirectCosts({
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1
+        })
       ]);
 
-      // Calculate metrics using same logic as Daily Entry (pax not mealsCalculated)
+      // Calculate last month overhead per meal
+      const lastMonthTotalOverhead = lastMonthIndirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const lastMonthTotalMeals = lastMonthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      const calculatedOverheadPerMeal = lastMonthTotalMeals > 0 ? lastMonthTotalOverhead / lastMonthTotalMeals : 0;
+      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
       
       // Today's meals and CPM
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const todayCostPerMeal = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
-      const todayOverhead = overheadPerMeal; // Last month's overhead per meal
+      const todayOverhead = calculatedOverheadPerMeal;
       const todayCPM = todayCostPerMeal + todayOverhead;
       
       // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const lastWeekCostPerMeal = lastWeekMeals > 0 ? lastWeekIngredientCost / lastWeekMeals : 0;
-      const lastWeekOverhead = overheadPerMeal; // Use calculated overhead per meal
+      const lastWeekOverhead = calculatedOverheadPerMeal;
       const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       
-      // Current week CPM
-      const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
-      const weekOverhead = overheadPerMeal; // Use calculated overhead per meal
-      const currentWeekCPM = weekCostPerMeal + weekOverhead;
-
-      // Today's hospital contribution
-      const hospitalsContribution: Array<{ name: string; meals: number; percentage: number }> = [];
-      if (todayMeals > 0) {
-        const hospitalMeals: { [key: string]: { meals: number; hospital: any } } = {};
-        
-        todayProductions.forEach((production: any) => {
-          const hospitalId = production.hospitalId;
-          if (!hospitalMeals[hospitalId]) {
-            hospitalMeals[hospitalId] = {
-              meals: 0,
-              hospital: hospitals.find((h: any) => h.id === hospitalId)
-            };
-          }
-          hospitalMeals[hospitalId].meals += production.patientsServed || 0;
-        });
-        
-        Object.values(hospitalMeals).forEach(({ meals, hospital }) => {
-          if (hospital && meals > 0) {
-            const percentage = (meals / todayMeals) * 100;
-            hospitalsContribution.push({
-              name: hospital.name,
-              meals,
-              percentage: Math.round(percentage * 10) / 10
-            });
-          }
-        });
-        
-        hospitalsContribution.sort((a, b) => b.meals - a.meals);
-      }
-
-      // 7-day trend
-      const sevenDayTrend: Array<{ date: string; meals: number }> = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        const dayProductions = sevenDayProductions.filter((prod: any) => 
-          new Date(prod.productionDate).toISOString().split('T')[0] === dateStr
-        );
-        const dayMeals = dayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-        
-        sevenDayTrend.push({
-          date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-          meals: dayMeals
-        });
-      }
-
-      // Monthly CPM trend (last 4 weeks + current)
-      const monthCPMTrend: Array<{ week: string; cpm: number }> = [];
-      for (let i = 4; i >= 0; i--) {
-        const weekStartTrend = new Date(weekStart);
-        weekStartTrend.setDate(weekStart.getDate() - (i * 7));
-        const weekEndTrend = new Date(weekStartTrend);
-        weekEndTrend.setDate(weekStartTrend.getDate() + 6);
-        
-        const weekProductionsTrend = sevenDayProductions.filter((prod: any) => {
-          const prodDate = new Date(prod.productionDate);
-          return prodDate >= weekStartTrend && prodDate <= weekEndTrend;
-        });
-        const weekPurchasesTrend = sevenDayPurchases.filter((purchase: any) => {
-          const purchaseDate = new Date(purchase.purchaseDate);
-          return purchaseDate >= weekStartTrend && purchaseDate <= weekEndTrend;
-        });
-        
-        const weekCostTrend = weekPurchasesTrend.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-        const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.beneficiariesServed || 0), 0);
-        
-        const weekCostPerMealTrend = weekMealsTrend > 0 ? weekCostTrend / weekMealsTrend : 0;
-        const weekCPMTrend = weekCostPerMealTrend + overheadPerMeal;
-        
-        const weekLabel = i === 0 ? 'Current' : `W${5-i}`;
-        monthCPMTrend.push({
-          week: weekLabel,
-          cpm: Math.round(weekCPMTrend)
-        });
-      }
+      // Last month CPM
+      const lastMonthIngredientCost = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const lastMonthCostPerMeal = lastMonthTotalMeals > 0 ? lastMonthIngredientCost / lastMonthTotalMeals : 0;
+      const lastMonthCPM = lastMonthCostPerMeal + calculatedOverheadPerMeal;
 
       setDashboardData({
+        lastMonthCPM: Math.round(lastMonthCPM),
         lastWeekCPM: Math.round(lastWeekCPM),
-        currentWeekCPM: Math.round(currentWeekCPM),
         todayCPM: Math.round(todayCPM),
+        lastMonthMeals: lastMonthTotalMeals,
+        lastWeekMeals: lastWeekMeals,
         todayMeals,
-        hospitalsContribution,
-        sevenDayTrend,
-        monthCPMTrend
       });
 
       setError(null);
@@ -245,48 +139,6 @@ const Dashboard: React.FC = () => {
       // Keep default values (zeros) if API fails
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Load last month's overhead per meal
-  const loadLastMonthOverhead = async () => {
-    try {
-      const today = new Date();
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
-      
-      // Get last month's indirect costs and productions
-      const [indirectCosts, productions] = await Promise.all([
-        indirectCostsAPI.getIndirectCosts({
-          year: lastMonth.getFullYear(),
-          month: lastMonth.getMonth() + 1
-        }),
-        productionAPI.getProductions({
-          start_date: lastMonth.toISOString(),
-          end_date: lastMonthEnd.toISOString()
-        })
-      ]);
-      
-      // Calculate fixed overhead per meal from last month: Total overhead ÷ Total meals
-      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
-      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      
-      console.log('📊 Dashboard - Last month overhead calculation:', {
-        totalOverheadAmount,
-        totalMeals,
-        month: lastMonth.getMonth() + 1,
-        year: lastMonth.getFullYear(),
-        overheadPerMeal: totalMeals > 0 ? totalOverheadAmount / totalMeals : 0
-      });
-      
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
-      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
-      
-      console.log('✅ Dashboard - Fixed overhead per meal for calculations:', calculatedOverheadPerMeal);
-      
-    } catch (err: any) {
-      console.error('Failed to load last month overhead:', err);
-      setOverheadPerMeal(0); // Use 0 if calculation fails
     }
   };
 
@@ -329,14 +181,39 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Key Metrics Cards - Using Real Calculations */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Key Metrics Cards - Last Month, Last Week, Today */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
-                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Last Month CPM</dt>
+                  <dd>
+                    <div className="text-2xl font-semibold text-gray-900">
+                      RWF {dashboardData.lastMonthCPM.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {dashboardData.lastMonthMeals.toLocaleString()} meals
+                    </div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
                 </div>
               </div>
               <div className="ml-5 w-0 flex-1">
@@ -345,6 +222,9 @@ const Dashboard: React.FC = () => {
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
                       RWF {dashboardData.lastWeekCPM.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {dashboardData.lastWeekMeals.toLocaleString()} meals
                     </div>
                   </dd>
                 </dl>
@@ -363,54 +243,13 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Current Week CPM</dt>
-                  <dd>
-                    <div className="text-2xl font-semibold text-gray-900">
-                      RWF {dashboardData.currentWeekCPM.toLocaleString()}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                  <Calculator className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Today CPM</dt>
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
                       RWF {dashboardData.todayCPM.toLocaleString()}
                     </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Meals for Today</dt>
-                  <dd>
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {dashboardData.todayMeals.toLocaleString()}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {dashboardData.todayMeals.toLocaleString()} meals
                     </div>
                   </dd>
                 </dl>
@@ -418,167 +257,9 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              to="/daily"
-              className="flex items-center justify-center px-6 py-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 group"
-            >
-              <Calendar className="h-5 w-5 mr-3 group-hover:text-red-600" />
-              Enter Today's Data
-            </Link>
-            
-            <Link
-              to="/reports/daily"
-              className="flex items-center justify-center px-6 py-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 group"
-            >
-              <FileText className="h-5 w-5 mr-3 group-hover:text-red-600" />
-              View Daily Report
-            </Link>
-            
-            <Link
-              to="/reports/weekly"
-              className="flex items-center justify-center px-6 py-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 group"
-            >
-              <FileText className="h-5 w-5 mr-3 group-hover:text-red-600" />
-              View This Week's Report
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 7-Day Meals Trend */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">7-Day Meals Trend</h3>
-          </div>
-          <div className="p-6">
-            {dashboardData.sevenDayTrend.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No data available
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {dashboardData.sevenDayTrend.map((day, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="w-12 text-xs text-gray-600">{day.date}</div>
-                    <div className="flex-1 mx-3">
-                      <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div
-                          className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                          style={{ 
-                            width: `${dashboardData.sevenDayTrend.length > 0 
-                              ? (day.meals / Math.max(...dashboardData.sevenDayTrend.map(d => d.meals))) * 100 
-                              : 0}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="w-12 text-xs text-gray-900 text-right font-medium">
-                      {day.meals}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Current Month CPM Trend */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Monthly CPM Trend</h3>
-          </div>
-          <div className="p-6">
-            {dashboardData.monthCPMTrend.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No data available
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {dashboardData.monthCPMTrend.map((week, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="w-16 text-xs text-gray-600">{week.week}</div>
-                    <div className="flex-1 mx-3">
-                      <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div
-                          className={`h-3 rounded-full transition-all duration-300 ${
-                            week.week === 'Current' ? 'bg-red-600' : 'bg-green-600'
-                          }`}
-                          style={{ 
-                            width: `${dashboardData.monthCPMTrend.length > 0 
-                              ? (week.cpm / Math.max(...dashboardData.monthCPMTrend.map(w => w.cpm))) * 100 
-                              : 0}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="w-16 text-xs text-gray-900 text-right font-medium">
-                      {week.cpm}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Hospitals Contribution Today */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Today's Hospital Contribution</h3>
-          </div>
-          <div className="p-6">
-            {dashboardData.hospitalsContribution.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No data available
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {dashboardData.hospitalsContribution.map((hospital, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900 truncate">{hospital.name}</span>
-                        <span className="text-sm text-gray-500">{hospital.meals}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${hospital.percentage}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">{hospital.percentage}%</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Client-side aggregation info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start">
-          <Calendar className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
-          <div>
-            <h4 className="text-blue-900 font-medium">Real-Time Dashboard</h4>
-            <p className="text-blue-800 text-sm mt-1">
-              Showing 4 key metrics with proper overhead calculation: Today's ingredient cost ÷ today's meals + Fixed overhead (RWF {overheadPerMeal}) from last month's total overhead ÷ last month's total meals.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
