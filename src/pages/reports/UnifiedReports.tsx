@@ -10,7 +10,6 @@ interface ServiceCPMData {
   totalCost: number;
   totalMeals: number;
   cpm: number;
-  totalCPM: number;
 }
 
 const UnifiedReports: React.FC = () => {
@@ -225,8 +224,7 @@ const UnifiedReports: React.FC = () => {
       console.log('UnifiedReports - Last month overhead calculation:', {
         totalOverheadAmount,
         totalMeals,
-        month: lastMonth.getMonth() + 1,
-        year: lastMonth.getFullYear()
+        month: lastMonth.getMonth() + 1
       });
       
       const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
