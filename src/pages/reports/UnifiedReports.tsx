@@ -119,8 +119,14 @@ const UnifiedReports: React.FC = () => {
           break;
 
         case 'annual':
-      const cpm = totalMeals > 0 ? totalCost / totalMeals : 0;
-      const totalCPM = totalMeals > 0 ? cpm + overheadPerMeal : 0;
+          startDate = new Date(selectedYear, 0, 1);
+          endDate = new Date(selectedYear + 1, 0, 1);
+          title = `Annual Report - ${selectedYear}`;
+          break;
+
+        default:
+          return;
+      }
 
       setReportTitle(title);
 
@@ -148,25 +154,10 @@ const UnifiedReports: React.FC = () => {
         const totalCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
         const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         
-        let cpm = 0;
-        let totalCPM = 0;
-        
-        if (totalMeals > 0) {
-          const costPerMeal = totalCost / totalMeals;
-          cpm = costPerMeal;
-          totalCPM = cpm + overheadPerMeal; // CPM + Overhead = Total CPM
-        }
-
-        serviceData.push({
-          service,
-          totalCost,
+        const cpm = totalMeals > 0 ? totalCost / totalMeals : 0;
+        const totalCPM = totalMeals > 0 ? cpm + overheadPerMeal : 0;
           totalMeals,
           cpm: Math.round(cpm),
-          totalCPM: Math.round(totalCPM),
-        });
-        cpm: Math.round(cpm),
-        totalCPM: Math.round(totalCPM)
-      });
 
       setServiceCPMData(serviceData);
       setTotalMeals(grandTotalMeals);
