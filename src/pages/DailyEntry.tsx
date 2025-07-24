@@ -1079,20 +1079,12 @@ const DailyEntry: React.FC = () => {
             </div>
 
             <div className="bg-purple-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-purple-600 font-medium">Fixed Overhead per Meal</div>
-              </div>
+              <div className="text-sm text-purple-600 font-medium">Overhead</div>
               <div className="text-2xl font-bold text-purple-900">
                 RWF {overheadPerMeal.toLocaleString()}
               </div>
             </div>
 
-            <div className="bg-orange-50 rounded-lg p-4">
-              <div className="text-sm text-orange-600 font-medium">Total Service Overhead</div>
-              <div className="text-2xl font-bold text-orange-900">
-                RWF {Math.round(calculations.overhead * calculations.totalBeneficiariesServed).toLocaleString()}
-              </div>
-            </div>
           </div>
 
           <div className="mt-6 bg-red-50 rounded-lg p-6">
@@ -1116,10 +1108,9 @@ const DailyEntry: React.FC = () => {
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="font-medium text-gray-900 mb-2">Calculation Breakdown</div>
               <div className="space-y-1 text-gray-700 text-xs">
-                <div>1. Today's Cost per Meal = Today's ingredient cost ÷ Today's meals</div>
-                <div>2. Fixed Overhead = RWF {overheadPerMeal} per meal (from last month)</div>
-                <div>3. Final CPM = Today's cost per meal + Fixed overhead</div>
-                <div className="font-medium text-red-700 mt-2">Overhead is NOT calculated daily - it's fixed from last month!</div>
+                <div>1. Cost per Meal = Today's ingredient cost ÷ Today's meals</div>
+                <div>2. Overhead = RWF {overheadPerMeal} per meal (from last month)</div>
+                <div>3. Total CPM = Cost per Meal + Overhead</div>
               </div>
             </div>
           </div>
