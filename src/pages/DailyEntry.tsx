@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Check, X, Calendar, AlertCircle, Calculator, Edit2, Eye, Trash2, Coffee, Utensils, Moon } from 'lucide-react';
-import { hospitalsAPI, ingredientsAPI, purchasesAPI, productionAPI } from '../services/api';
+import { hospitalsAPI, ingredientsAPI, purchasesAPI, productionAPI, indirectCostsAPI } from '../services/api';
 
 enum MealService {
   BREAKFAST = "BREAKFAST",
