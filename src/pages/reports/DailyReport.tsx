@@ -21,11 +21,11 @@ const DailyReport: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<DailyReportData | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [overheadPercentage, setOverheadPercentage] = useState(15);
+  const [overheadPerMeal] = useState(65.7); // Last month's calculated overhead per meal
 
   useEffect(() => {
     loadDailyReport();
-  }, [selectedDate, overheadPercentage]);
+  }, [selectedDate]);
 
   const loadDailyReport = async () => {
     try {
@@ -50,7 +50,7 @@ const DailyReport: React.FC = () => {
       // Fixed: Total meals is sum of patientsServed, not beneficiaries or mealsCalculated
       const totalMeals = productions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
       const costPerMeal = totalMeals > 0 ? totalIngredientCost / totalMeals : 0;
-      const overhead = costPerMeal * (overheadPercentage / 100);
+      const overhead = overheadPerMeal; // Fixed overhead per meal from last month
       const totalCPM = costPerMeal + overhead;
 
       const hospitalsServed = new Set(productions.map((p: any) => p.hospitalId)).size;
@@ -389,19 +389,9 @@ const DailyReport: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead Percentage</label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={overheadPercentage}
-                  onChange={(e) => setOverheadPercentage(parseInt(e.target.value) || 15)}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                />
-                <span className="text-sm text-gray-600">%</span>
-                <span className="text-xs text-gray-500">(Default: 15%)</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal</label>
+              <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                RWF {overheadPerMeal.toLocaleString()} (from last month)
               </div>
             </div>
           </div>
@@ -446,7 +436,7 @@ const DailyReport: React.FC = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Overhead ({overheadPercentage}%)</p>
+              <p className="text-sm font-medium text-gray-500">Overhead per Meal</p>
               <p className="text-2xl font-semibold text-gray-900">RWF {reportData ? Math.round(reportData.overhead).toLocaleString() : '0'}</p>
             </div>
           </div>
