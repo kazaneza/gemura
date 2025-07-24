@@ -7,9 +7,9 @@ import { exportToPDF } from '../../utils/pdfExport';
 
 interface ServiceCPMData {
   service: string;
-  cpm: number;
-  averageCPM: number;
+  totalCost: number;
   totalMeals: number;
+  cpm: number;
 }
 
 const UnifiedReports: React.FC = () => {
@@ -79,6 +79,7 @@ const UnifiedReports: React.FC = () => {
 
   useEffect(() => {
     loadReportData();
+    loadLastMonthOverhead();
   }, [reportType, selectedDate, selectedMonth, selectedWeek, selectedYear]);
 
   const loadReportData = async () => {
@@ -154,20 +155,17 @@ const UnifiedReports: React.FC = () => {
         const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         
         let cpm = 0;
-        let averageCPM = 0;
         
         if (totalMeals > 0) {
           const costPerMeal = totalCost / totalMeals;
-          const overhead = overheadPerMeal; // Fixed overhead per meal
           cpm = costPerMeal;
-          averageCPM = costPerMeal + overhead;
         }
 
         serviceData.push({
           service,
+          totalCost,
+          totalMeals,
           cpm: Math.round(cpm),
-          averageCPM: Math.round(averageCPM),
-          totalMeals
         });
 
         grandTotalMeals += totalMeals;
@@ -233,14 +231,14 @@ const UnifiedReports: React.FC = () => {
         year: lastMonth.getFullYear()
       });
       
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
       setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
       
       console.log('UnifiedReports - Calculated overhead per meal:', calculatedOverheadPerMeal);
       
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);
-      setOverheadPerMeal(65.7); // Use default if calculation fails
+      setOverheadPerMeal(0); // Use 0 if calculation fails
     }
   };
 
@@ -489,8 +487,10 @@ const UnifiedReports: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CPM (Ingredients Only)</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Average CPM (With Overhead)</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient Cost</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Meals Served</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CPM</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overhead</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Meals</th>
                 </tr>
               </thead>
@@ -505,14 +505,20 @@ const UnifiedReports: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                      RWF {service.cpm.toLocaleString()}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-green-600">
-                      RWF {service.averageCPM.toLocaleString()}
+                      RWF {(service.totalCost || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
                       {service.totalMeals.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-purple-600">
+                      RWF {service.cpm.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-orange-600">
+                      RWF {Math.round(overheadPerMeal).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
+                      RWF {(service.cpm + overheadPerMeal).toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -520,16 +526,22 @@ const UnifiedReports: React.FC = () => {
               <tfoot className="bg-gray-50">
                 <tr>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    Total Meals
+                    Total
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                    {/* Empty cells for alignment */}
+                    RWF {serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                    {/* Empty cells for alignment */}
+                    {totalMeals.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    {totalMeals.toLocaleString()}
+                    {/* CPM Average */}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
+                    {/* Overhead */}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
+                    {/* Total CPM */}
                   </td>
                 </tr>
               </tfoot>
