@@ -60,12 +60,6 @@ const IndirectCosts: React.FC = () => {
     loadMonthlyMeals();
   }, [selectedMonth]);
 
-  // Also load on component mount
-  useEffect(() => {
-    loadIndirectCosts();
-    loadMonthlyMeals();
-  }, []);
-
   const loadMonthlyMeals = async () => {
     try {
       const monthInfo = parseMonthId(selectedMonth);
@@ -90,12 +84,12 @@ const IndirectCosts: React.FC = () => {
       setLoading(true);
       const monthInfo = parseMonthId(selectedMonth);
 
-      console.log('Loading indirect costs for:', monthInfo);
+      console.log(`Loading indirect costs for: ${monthInfo.monthName} (${monthInfo.year}-${monthInfo.month})`);
       const data = await indirectCostsAPI.getIndirectCosts({
         year: monthInfo.year,
         month: monthInfo.month
       });
-      console.log('Loaded indirect costs:', data);
+      console.log(`Loaded ${data.length} indirect costs for ${monthInfo.monthName}:`, data);
       setCosts(data);
       setError(null);
     } catch (err: any) {
@@ -305,6 +299,20 @@ const IndirectCosts: React.FC = () => {
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
       />
+
+      {/* Debug Info */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="text-yellow-800 text-sm">
+          <strong>Currently viewing:</strong> {currentMonthInfo.monthName}<br/>
+          <strong>Data found:</strong> {costs.length} overhead entries<br/>
+          <strong>Total meals for month:</strong> {totalMealsForMonth.toLocaleString()}<br/>
+          {costs.length === 0 && (
+            <span className="text-red-600">
+              <strong>No data found for this month.</strong> Try selecting a different month or add new overhead entries.
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Add New Cost Form */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
