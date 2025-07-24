@@ -209,14 +209,15 @@ const UnifiedReports: React.FC = () => {
       ]);
       
       // Calculate overhead per meal from last month
-      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const totalCPM = totalMeals > 0 ? Math.round(cpm + overheadPerMeal) : 0;
       const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
       console.log('UnifiedReports - Last month overhead calculation:', {
         totalOverheadAmount,
         totalMeals,
         month: lastMonth.getMonth() + 1,
-        year: lastMonth.getFullYear()
+        cpm: Math.round(cpm),
+        totalCPM
       });
       
       const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
