@@ -104,7 +104,8 @@ const IndirectCosts: React.FC = () => {
 
   // Calculate totals
   const totalOverheadPerMeal = costs.reduce((sum, cost) => sum + cost.amount, 0);
-  const totalOverheads = totalOverheadPerMeal * totalMealsForMonth;
+  const totalOverheadAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
+  const overheadPerMealForNextMonth = totalMealsForMonth > 0 ? totalOverheadAmount / totalMealsForMonth : 0;
 
   // Validate form
   const validateForm = () => {
@@ -244,9 +245,9 @@ const IndirectCosts: React.FC = () => {
           </span>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="text-sm text-red-600">Total Overheads for Month</div>
-            <div className="text-2xl font-bold text-red-700">RWF {totalOverheads.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-700">RWF {totalOverheadAmount.toLocaleString()}</div>
             <div className="text-xs text-red-600 mt-1">
-              RWF {totalOverheadPerMeal.toLocaleString()} per meal × {totalMealsForMonth.toLocaleString()} meals
+              Sum of all overhead amounts entered
             </div>
           </div>
         </div>
@@ -496,7 +497,7 @@ const IndirectCosts: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium text-gray-900">Total Overhead Amount:</span>
-                  <span className="text-xl font-bold text-blue-600">RWF {totalOverheads.toLocaleString()}</span>
+                  <span className="text-xl font-bold text-blue-600">RWF {totalOverheadAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium text-gray-900">Total Meals This Month:</span>
@@ -504,7 +505,7 @@ const IndirectCosts: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium text-gray-900">Overhead per Meal (Next Month):</span>
-                  <span className="text-2xl font-bold text-red-600">RWF {totalOverheadPerMeal.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-red-600">RWF {Math.round(overheadPerMealForNextMonth).toLocaleString()}</span>
                 </div>
               </div>
             </div>
