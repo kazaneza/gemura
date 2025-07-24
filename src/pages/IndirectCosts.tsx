@@ -503,18 +503,27 @@ const IndirectCosts: React.FC = () => {
           {/* Running Total */}
           {costs.length > 0 && (
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-900">Total Overhead Amount:</span>
-                  <span className="text-xl font-bold text-blue-600">RWF {totalOverheadAmount.toLocaleString()}</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-sm text-blue-600 font-medium mb-1">Total Overhead Amount</div>
+                    <div className="text-2xl font-bold text-blue-900">RWF {totalOverheadAmount.toLocaleString()}</div>
+                    <div className="text-xs text-blue-700 mt-1">Sum of all overhead amounts entered</div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-900">Total Meals This Month:</span>
-                  <span className="text-xl font-bold text-green-600">{totalMealsForMonth.toLocaleString()}</span>
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-sm text-green-600 font-medium mb-1">Total Meals This Month</div>
+                    <div className="text-2xl font-bold text-green-900">{totalMealsForMonth.toLocaleString()}</div>
+                    <div className="text-xs text-green-700 mt-1">From production data</div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-900">Overhead per Meal (Next Month):</span>
-                  <span className="text-2xl font-bold text-red-600">RWF {Math.round(overheadPerMealForNextMonth).toLocaleString()}</span>
+                <div className="bg-red-50 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-sm text-red-600 font-medium mb-1">Overhead per Meal (Next Month)</div>
+                    <div className="text-2xl font-bold text-red-900">RWF {Math.round(overheadPerMealForNextMonth).toLocaleString()}</div>
+                    <div className="text-xs text-red-700 mt-1">Total overhead ÷ Total meals</div>
+                  </div>
                 </div>
               </div>
             </div>
