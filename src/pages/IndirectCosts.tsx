@@ -340,7 +340,7 @@ const IndirectCosts: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal (RWF)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (RWF)</label>
               <input
                 type="number"
                 step="1"
