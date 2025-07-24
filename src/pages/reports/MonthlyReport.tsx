@@ -72,7 +72,7 @@ const MonthlyReport: React.FC = () => {
           <div>
             <h4 className="text-blue-900 font-medium">Client-Side Aggregation</h4>
             <p className="text-blue-800 text-sm mt-1">
-              This report uses real-time client-side aggregation. Weekly calculations: Cost/Meal (ingredients only) + Overhead (indirect cost per meal) = Total CPM. 
+              This report uses real-time client-side aggregation. Weekly calculations: Cost/Meal (ingredients only) + Overhead (RWF {overheadPerMeal} per meal from last month) = Total CPM. 
               Totals and averages are calculated correctly from weekly data.
             </p>
           </div>
