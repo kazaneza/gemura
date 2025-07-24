@@ -20,7 +20,7 @@ const UnifiedReports: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(getMonthId(getCurrentMonth()));
   const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [overheadPercentage, setOverheadPercentage] = useState(15);
+  const [overheadPerMeal] = useState(65.7); // Fixed overhead per meal from last month
   
   const [serviceCPMData, setServiceCPMData] = useState<ServiceCPMData[]>([]);
   const [totalMeals, setTotalMeals] = useState(0);
@@ -79,7 +79,7 @@ const UnifiedReports: React.FC = () => {
 
   useEffect(() => {
     loadReportData();
-  }, [reportType, selectedDate, selectedMonth, selectedWeek, selectedYear, overheadPercentage]);
+  }, [reportType, selectedDate, selectedMonth, selectedWeek, selectedYear]);
 
   const loadReportData = async () => {
     try {
@@ -158,7 +158,7 @@ const UnifiedReports: React.FC = () => {
         
         if (totalMeals > 0) {
           const costPerMeal = totalCost / totalMeals;
-          const overhead = costPerMeal * (overheadPercentage / 100);
+          const overhead = overheadPerMeal; // Fixed overhead per meal
           cpm = costPerMeal;
           averageCPM = costPerMeal + overhead;
         }
@@ -189,7 +189,7 @@ const UnifiedReports: React.FC = () => {
       serviceCPMData,
       totalMeals,
       reportType,
-      overheadPercentage
+      overheadPerMeal
     };
 
     exportToPDF({
@@ -380,18 +380,12 @@ const UnifiedReports: React.FC = () => {
               </div>
             )}
 
-            {/* Overhead Percentage */}
+            {/* Overhead per Meal (Read-only) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead %</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={overheadPercentage}
-                onChange={(e) => setOverheadPercentage(parseInt(e.target.value) || 15)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal</label>
+              <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                RWF {overheadPerMeal.toLocaleString()} (from last month)
+              </div>
             </div>
           </div>
         </div>
@@ -415,7 +409,6 @@ const UnifiedReports: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CPM (Ingredients Only)</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Average CPM (With Overhead)</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Average CPM (With Overheads)</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Meals</th>
                 </tr>
               </thead>
@@ -436,7 +429,7 @@ const UnifiedReports: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-green-600">
                       RWF {service.averageCPM.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
                       {service.totalMeals.toLocaleString()}
                     </td>
                   </tr>
@@ -447,7 +440,7 @@ const UnifiedReports: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                     Total Meals
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900" colSpan={2}>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
                     {/* Empty cells for alignment */}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
