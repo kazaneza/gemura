@@ -20,7 +20,7 @@ const UnifiedReports: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(getMonthId(getCurrentMonth()));
   const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [overheadPerMeal] = useState(65.7); // Fixed overhead per meal from last month
+  const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Will be calculated from last month
   
   const [serviceCPMData, setServiceCPMData] = useState<ServiceCPMData[]>([]);
   const [totalMeals, setTotalMeals] = useState(0);
