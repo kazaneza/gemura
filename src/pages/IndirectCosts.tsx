@@ -60,6 +60,12 @@ const IndirectCosts: React.FC = () => {
     loadMonthlyMeals();
   }, [selectedMonth]);
 
+  // Also load on component mount
+  useEffect(() => {
+    loadIndirectCosts();
+    loadMonthlyMeals();
+  }, []);
+
   const loadMonthlyMeals = async () => {
     try {
       const monthInfo = parseMonthId(selectedMonth);
@@ -84,13 +90,16 @@ const IndirectCosts: React.FC = () => {
       setLoading(true);
       const monthInfo = parseMonthId(selectedMonth);
 
+      console.log('Loading indirect costs for:', monthInfo);
       const data = await indirectCostsAPI.getIndirectCosts({
         year: monthInfo.year,
         month: monthInfo.month
       });
+      console.log('Loaded indirect costs:', data);
       setCosts(data);
       setError(null);
     } catch (err: any) {
+      console.error('Error loading indirect costs:', err);
       setError(err.response?.data?.detail || 'Failed to load indirect costs');
     } finally {
       setLoading(false);
