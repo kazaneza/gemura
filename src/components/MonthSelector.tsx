@@ -80,14 +80,6 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
             </div>
           )}
         </div>
-        
-        <div className="mt-4 p-3 bg-green-50 rounded-lg">
-          <h4 className="text-green-900 font-medium text-sm">All Months Editable</h4>
-          <p className="text-green-800 text-xs mt-1">
-            You can now edit data for any month - past, current, or future. This gives you full flexibility 
-            to make corrections, add missing data, or plan ahead as needed.
-          </p>
-        </div>
       </div>
     </div>
   );
