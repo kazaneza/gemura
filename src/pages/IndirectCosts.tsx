@@ -343,12 +343,12 @@ const IndirectCosts: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal (RWF)</label>
               <input
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
                 value={newCost.amount}
                 onChange={(e) => setNewCost({ ...newCost, amount: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                placeholder="0.00"
+                placeholder="Enter total amount for this category"
               />
             </div>
           </div>
@@ -386,8 +386,7 @@ const IndirectCosts: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Per Meal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total for Month</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -440,7 +439,7 @@ const IndirectCosts: React.FC = () => {
                         {editingId === cost.id ? (
                           <input
                             type="number"
-                            step="0.01"
+                            step="1"
                             min="0"
                             value={editingCost?.amount || ''}
                             onChange={(e) => updateEditingCost('amount', parseFloat(e.target.value) || 0)}
@@ -449,11 +448,6 @@ const IndirectCosts: React.FC = () => {
                         ) : (
                           <span className="text-sm font-medium text-gray-900">RWF {cost.amount.toLocaleString()}</span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-blue-600">
-                          RWF {(cost.amount * totalMealsForMonth).toLocaleString()}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         {editingId === cost.id ? (
@@ -499,14 +493,18 @@ const IndirectCosts: React.FC = () => {
           {/* Running Total */}
           {costs.length > 0 && (
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-900">Total per Meal:</span>
-                  <span className="text-xl font-bold text-green-600">RWF {totalOverheadPerMeal.toLocaleString()}</span>
+                  <span className="text-lg font-medium text-gray-900">Total Overhead Amount:</span>
+                  <span className="text-xl font-bold text-blue-600">RWF {totalOverheads.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-900">Total for Month:</span>
-                  <span className="text-2xl font-bold text-red-600">RWF {totalOverheads.toLocaleString()}</span>
+                  <span className="text-lg font-medium text-gray-900">Total Meals This Month:</span>
+                  <span className="text-xl font-bold text-green-600">{totalMealsForMonth.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-medium text-gray-900">Overhead per Meal (Next Month):</span>
+                  <span className="text-2xl font-bold text-red-600">RWF {totalOverheadPerMeal.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -517,39 +515,52 @@ const IndirectCosts: React.FC = () => {
       {/* Overhead Per Meal Calculation */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Overhead Calculation for {currentMonthInfo.monthName}</h3>
+          <h3 className="text-lg font-medium text-gray-900">Overhead Calculation for Next Month's Daily Entries</h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">RWF {totalOverheadPerMeal.toLocaleString()}</div>
-              <div className="text-sm text-gray-500">Total Overhead per Meal</div>
-              <div className="text-xs text-gray-400 mt-1">Sum of all overhead entries</div>
+              <div className="text-2xl font-bold text-blue-600">RWF {totalOverheads.toLocaleString()}</div>
+              <div className="text-sm text-gray-500">Total Overhead Amount</div>
+              <div className="text-xs text-gray-400 mt-1">Sum of all overhead categories</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{totalMealsForMonth.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-green-600">{totalMealsForMonth.toLocaleString()}</div>
               <div className="text-sm text-gray-500">Total Meals for Month</div>
               <div className="text-xs text-gray-400 mt-1">(from production data)</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
-                RWF {totalOverheads.toLocaleString()}
+                RWF {totalOverheadPerMeal.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Total Monthly Overheads</div>
+              <div className="text-sm text-gray-500">Overhead per Meal (Next Month)</div>
               <div className="text-xs text-gray-400 mt-1">
-                Overhead per meal × Total meals
+                Total overhead ÷ Total meals
               </div>
             </div>
           </div>
 
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <h4 className="text-green-900 font-medium">How This Works:</h4>
+            <div className="text-green-800 text-sm mt-2 space-y-1">
+              <div>• You enter total overhead amounts for each category (fuel, salaries, repairs, etc.)</div>
+              <div>• System calculates: Total overhead ÷ Total meals = Fixed overhead per meal</div>
+              <div>• This fixed amount (RWF {totalOverheadPerMeal.toLocaleString()}) will be used in NEXT month's daily entries</div>
+              <div>• Daily entries will add this fixed amount to each meal's cost (not calculated daily)</div>
+            </div>
+          </div>
+
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">New Calculation Method:</h4>
+            <h4 className="text-sm font-medium text-blue-900 mb-2">Overhead Calculation for Next Month:</h4>
             <div className="text-sm text-blue-800">
-              <div>1. Enter overhead cost per meal for each category</div>
-              <div>2. Total overhead per meal: RWF {totalOverheadPerMeal.toLocaleString()}</div>
+              <div>1. Enter total overhead amounts for each category</div>
+              <div>2. Total overhead amount: RWF {totalOverheads.toLocaleString()}</div>
               <div>3. Total meals for month: {totalMealsForMonth.toLocaleString()}</div>
               <div className="font-medium mt-1">
-                Total Monthly Overheads: RWF {totalOverheadPerMeal.toLocaleString()} × {totalMealsForMonth.toLocaleString()} = RWF {totalOverheads.toLocaleString()}
+                Overhead per meal for NEXT month: RWF {totalOverheads.toLocaleString()} ÷ {totalMealsForMonth.toLocaleString()} = RWF {totalOverheadPerMeal.toLocaleString()}
+              </div>
+              <div className="text-xs text-blue-600 mt-2">
+                This overhead per meal will be used in next month's daily entries (fixed amount, not calculated daily)
               </div>
             </div>
           </div>

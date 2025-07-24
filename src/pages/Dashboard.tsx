@@ -253,7 +253,7 @@ const Dashboard: React.FC = () => {
     try {
       const today = new Date();
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
       
       // Get last month's indirect costs and productions
       const [indirectCosts, productions] = await Promise.all([
@@ -267,25 +267,26 @@ const Dashboard: React.FC = () => {
         })
       ]);
       
-      // Calculate overhead per meal from last month
+      // Calculate fixed overhead per meal from last month: Total overhead ÷ Total meals
       const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      console.log('Dashboard - Last month overhead calculation:', {
+      console.log('📊 Dashboard - Last month overhead calculation:', {
         totalOverheadAmount,
         totalMeals,
         month: lastMonth.getMonth() + 1,
-        year: lastMonth.getFullYear()
+        year: lastMonth.getFullYear(),
+        overheadPerMeal: totalMeals > 0 ? totalOverheadAmount / totalMeals : 0
       });
       
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
       setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
       
-      console.log('Dashboard - Calculated overhead per meal:', calculatedOverheadPerMeal);
+      console.log('✅ Dashboard - Fixed overhead per meal for calculations:', calculatedOverheadPerMeal);
       
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);
-      setOverheadPerMeal(65.7); // Use default if calculation fails
+      setOverheadPerMeal(0); // Use 0 if calculation fails
     }
   };
 
@@ -573,8 +574,7 @@ const Dashboard: React.FC = () => {
           <div>
             <h4 className="text-blue-900 font-medium">Real-Time Dashboard</h4>
             <p className="text-blue-800 text-sm mt-1">
-              Showing the 4 key metrics: Last Week CPM, Current Week CPM, Today CPM, and Total Meals for Today. 
-              All calculations use real-time data with RWF {overheadPerMeal} overhead per meal (calculated from last month).
+              Showing 4 key metrics with proper overhead calculation: Today's ingredient cost ÷ today's meals + Fixed overhead (RWF {overheadPerMeal}) from last month's total overhead ÷ last month's total meals.
             </p>
           </div>
         </div>

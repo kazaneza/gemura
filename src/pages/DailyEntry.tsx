@@ -260,7 +260,7 @@ const DailyEntry: React.FC = () => {
     try {
       const today = new Date();
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
       
       // Get last month's indirect costs and productions
       const [indirectCosts, productions] = await Promise.all([
@@ -274,25 +274,26 @@ const DailyEntry: React.FC = () => {
         })
       ]);
       
-      // Calculate overhead per meal from last month
+      // Calculate overhead per meal from last month: Total indirect costs ÷ Total meals
       const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      console.log('Last month overhead calculation:', {
+      console.log('📊 Last month overhead calculation:', {
         totalOverheadAmount,
         totalMeals,
         month: lastMonth.getMonth() + 1,
-        year: lastMonth.getFullYear()
+        year: lastMonth.getFullYear(),
+        overheadPerMeal: totalMeals > 0 ? totalOverheadAmount / totalMeals : 0
       });
       
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 0;
       setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
       
-      console.log('Calculated overhead per meal:', calculatedOverheadPerMeal);
+      console.log('✅ Fixed overhead per meal for daily entries:', calculatedOverheadPerMeal);
       
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);
-      setOverheadPerMeal(65.7); // Use default if calculation fails
+      setOverheadPerMeal(0); // Use 0 if calculation fails (no overhead if no data)
     }
   };
 
@@ -470,12 +471,15 @@ const DailyEntry: React.FC = () => {
     totalIngredientCost: Object.values(ingredientEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.totalPrice, 0),
     totalBeneficiariesServed: Object.values(hospitalEntries[selectedService] || {}).reduce((sum, entry) => sum + entry.beneficiariesServed, 0),
     get costPerMeal() {
+      // Today's ingredient cost ÷ today's number of meals
       return this.totalBeneficiariesServed > 0 ? this.totalIngredientCost / this.totalBeneficiariesServed : 0;
     },
     get overhead() {
-      return overheadPerMeal; // Direct overhead per meal
+      // Fixed overhead per meal from last month (NOT calculated daily)
+      return overheadPerMeal;
     },
     get totalCostPerMeal() {
+      // Final Cost per Meal = (Today's ingredient cost ÷ today's meals) + Fixed overhead from last month
       return this.costPerMeal + this.overhead;
     }
   };
@@ -1079,20 +1083,11 @@ const DailyEntry: React.FC = () => {
 
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-purple-600 font-medium">Overhead per Meal</div>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={overheadPerMeal}
-                  onChange={(e) => setOverheadPerMeal(parseInt(e.target.value) || 50)}
-                  className="w-20 px-2 py-1 text-xs border border-purple-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
-                />
-                <span className="text-xs text-gray-500">(calculated from last month)</span>
+                <div className="text-sm text-purple-600 font-medium">Fixed Overhead per Meal</div>
               </div>
               <div className="text-2xl font-bold text-purple-900">RWF {overheadPerMeal.toLocaleString()}</div>
               <div className="text-xs text-purple-700 mt-1">
-                Overhead per meal from last month
+                From last month: Total overhead ÷ Total meals
               </div>
             </div>
 
@@ -1109,12 +1104,15 @@ const DailyEntry: React.FC = () => {
 
           <div className="mt-6 bg-red-50 rounded-lg p-6">
             <div className="text-center">
-              <div className="text-sm text-red-600 font-medium mb-2">Total Cost per Meal</div>
+              <div className="text-sm text-red-600 font-medium mb-2">Final Cost per Meal for {getServiceName(selectedService)}</div>
               <div className="text-4xl font-bold text-red-900">
                 RWF {Math.round(calculations.totalCostPerMeal).toLocaleString()}
               </div>
               <div className="text-sm text-red-700 mt-2">
-                Cost per Meal + Overhead = RWF {Math.round(calculations.costPerMeal).toLocaleString()} + RWF {overheadPerMeal.toFixed(1)}
+                (Today's ingredient cost ÷ today's meals) + Fixed overhead from last month
+              </div>
+              <div className="text-sm text-red-700 mt-1">
+                RWF {Math.round(calculations.costPerMeal).toLocaleString()} + RWF {overheadPerMeal.toLocaleString()} = RWF {Math.round(calculations.totalCostPerMeal).toLocaleString()}
               </div>
             </div>
           </div>
@@ -1131,9 +1129,10 @@ const DailyEntry: React.FC = () => {
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="font-medium text-gray-900 mb-2">Calculation Breakdown</div>
               <div className="space-y-1 text-gray-700 text-xs">
-                <div>1. Cost per Meal = Ingredient Cost ÷ Total Beneficiaries Served</div>
-                <div>2. Overhead = RWF {overheadPerMeal} per meal (fixed)</div>
-                <div>3. Total CPM = Cost per Meal + Overhead</div>
+                <div>1. Today's Cost per Meal = Today's ingredient cost ÷ Today's meals</div>
+                <div>2. Fixed Overhead = RWF {overheadPerMeal} per meal (from last month)</div>
+                <div>3. Final CPM = Today's cost per meal + Fixed overhead</div>
+                <div className="font-medium text-red-700 mt-2">Overhead is NOT calculated daily - it's fixed from last month!</div>
               </div>
             </div>
           </div>
