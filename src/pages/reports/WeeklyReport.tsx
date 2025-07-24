@@ -732,7 +732,7 @@ const WeeklyReport: React.FC = () => {
                     
                     return Object.entries(serviceData).map(([service, data], serviceIndex) => {
                       const costPerMeal = data.meals > 0 ? data.cost / data.meals : 0;
-                      const overhead = costPerMeal * (overheadPercentage / 100);
+                      const overhead = overheadPerMeal;
                       const totalCPM = costPerMeal + overhead;
                       
                       return (
