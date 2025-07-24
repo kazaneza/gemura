@@ -18,7 +18,7 @@ const WeeklyReport: React.FC = () => {
   const [productions, setProductions] = useState<any[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(getMonthId(getCurrentMonth()));
   const [selectedWeek, setSelectedWeek] = useState<string>('');
-  const [overheadPercentage, setOverheadPercentage] = useState(15);
+  const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Will be calculated from last month
 
   // Group data by service for service-based analysis
   const serviceBreakdown = {
@@ -58,7 +58,7 @@ const WeeklyReport: React.FC = () => {
     data.totalMeals = data.productions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
     if (data.totalMeals > 0) {
       data.costPerMeal = data.totalCost / data.totalMeals;
-      data.overhead = data.costPerMeal * (overheadPercentage / 100);
+      data.overhead = overheadPerMeal; // Fixed overhead per meal from last month
       data.totalCPM = data.costPerMeal + data.overhead;
     }
   });
@@ -119,6 +119,7 @@ const WeeklyReport: React.FC = () => {
     if (selectedWeek) {
       loadWeeklyData();
     }
+    loadLastMonthOverhead();
   }, [selectedWeek]);
 
   const loadWeeklyData = async () => {
@@ -169,7 +170,7 @@ const WeeklyReport: React.FC = () => {
 
   if (weeklySummary.totalMealsServed > 0) {
     weeklySummary.costPerMeal = weeklySummary.totalIngredientCost / weeklySummary.totalMealsServed;
-    weeklySummary.overhead = weeklySummary.costPerMeal * (overheadPercentage / 100);
+    weeklySummary.overhead = overheadPerMeal; // Fixed overhead per meal from last month
     weeklySummary.totalCPM = weeklySummary.costPerMeal + weeklySummary.overhead;
   }
 
@@ -203,6 +204,38 @@ const WeeklyReport: React.FC = () => {
       }
     }
   }
+
+  // Load last month's overhead per meal
+  const loadLastMonthOverhead = async () => {
+    try {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      
+      // Get last month's indirect costs and productions
+      const [indirectCosts, productions] = await Promise.all([
+        indirectCostsAPI.getIndirectCosts({
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1
+        }),
+        productionAPI.getProductions({
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
+        })
+      ]);
+      
+      // Calculate overhead per meal from last month
+      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7; // Fallback to default
+      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      
+    } catch (err: any) {
+      console.error('Failed to load last month overhead:', err);
+      setOverheadPerMeal(65.7); // Use default if calculation fails
+    }
+  };
 
   const handleExportExcel = () => {
     console.log('Exporting to Excel...');
@@ -412,7 +445,7 @@ const WeeklyReport: React.FC = () => {
               <tbody>
                 ${dailyData.map(day => {
                   const costPerMeal = day.meals > 0 ? day.cost / day.meals : 0;
-                  const overhead = costPerMeal * (overheadPercentage / 100);
+                  const overhead = overheadPerMeal;
                   const totalCPM = costPerMeal + overhead;
                   return `
                     <tr>
@@ -539,19 +572,9 @@ const WeeklyReport: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead Percentage</label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={overheadPercentage}
-                  onChange={(e) => setOverheadPercentage(parseInt(e.target.value) || 15)}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                />
-                <span className="text-sm text-gray-600">%</span>
-                <span className="text-xs text-gray-500">(Default: 15%)</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal</label>
+              <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
+                RWF {overheadPerMeal.toLocaleString()} (calculated from last month)
               </div>
             </div>
           </div>

@@ -58,7 +58,7 @@ const DailyEntry: React.FC = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedService, setSelectedService] = useState<MealService>(MealService.BREAKFAST);
-  const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Default overhead per meal from last month
+  const [overheadPerMeal, setOverheadPerMeal] = useState(0); // Will be calculated from last month's data
   
   // Changed to store entries by service
   const [ingredientEntries, setIngredientEntries] = useState<{ [service: string]: { [key: string]: IngredientEntry } }>({
@@ -85,6 +85,7 @@ const DailyEntry: React.FC = () => {
   useEffect(() => {
     loadInitialData();
     loadExistingEntries();
+    loadLastMonthOverhead();
   }, []);
 
   // Initialize with one empty item
@@ -234,7 +235,7 @@ const DailyEntry: React.FC = () => {
       Object.values(entriesByDate).forEach(entry => {
         if (entry.totalMeals > 0) {
           entry.costPerMeal = entry.totalCost / entry.totalMeals;
-          entry.overhead = 50; // Fixed overhead per meal
+          entry.overhead = overheadPerMeal; // Use calculated overhead per meal
           entry.totalCPM = entry.costPerMeal + entry.overhead;
         }
       });
@@ -252,6 +253,38 @@ const DailyEntry: React.FC = () => {
   const showSuccess = (message: string) => {
     setSuccess(message);
     setTimeout(() => setSuccess(null), 3000);
+  };
+
+  // Load last month's overhead per meal
+  const loadLastMonthOverhead = async () => {
+    try {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      
+      // Get last month's indirect costs and productions
+      const [indirectCosts, productions] = await Promise.all([
+        indirectCostsAPI.getIndirectCosts({
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1
+        }),
+        productionAPI.getProductions({
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
+        })
+      ]);
+      
+      // Calculate overhead per meal from last month
+      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7; // Fallback to default
+      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      
+    } catch (err: any) {
+      console.error('Failed to load last month overhead:', err);
+      setOverheadPerMeal(65.7); // Use default if calculation fails
+    }
   };
 
   // Load existing entry for editing
@@ -1046,10 +1079,11 @@ const DailyEntry: React.FC = () => {
                   onChange={(e) => setOverheadPerMeal(parseInt(e.target.value) || 50)}
                   className="w-20 px-2 py-1 text-xs border border-purple-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
+                <span className="text-xs text-gray-500">(calculated from last month)</span>
               </div>
               <div className="text-2xl font-bold text-purple-900">RWF {overheadPerMeal.toLocaleString()}</div>
               <div className="text-xs text-purple-700 mt-1">
-                Fixed overhead per meal
+                Overhead per meal from last month
               </div>
             </div>
 

@@ -21,10 +21,11 @@ const DailyReport: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<DailyReportData | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [overheadPerMeal] = useState(65.7); // Last month's calculated overhead per meal
+  const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Will be calculated from last month
 
   useEffect(() => {
     loadDailyReport();
+    loadLastMonthOverhead();
   }, [selectedDate]);
 
   const loadDailyReport = async () => {
@@ -75,6 +76,38 @@ const DailyReport: React.FC = () => {
       setError('Failed to load daily report data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load last month's overhead per meal
+  const loadLastMonthOverhead = async () => {
+    try {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      
+      // Get last month's indirect costs and productions
+      const [indirectCosts, productions] = await Promise.all([
+        indirectCostsAPI.getIndirectCosts({
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1
+        }),
+        productionAPI.getProductions({
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
+        })
+      ]);
+      
+      // Calculate overhead per meal from last month
+      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7; // Fallback to default
+      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      
+    } catch (err: any) {
+      console.error('Failed to load last month overhead:', err);
+      setOverheadPerMeal(65.7); // Use default if calculation fails
     }
   };
 
@@ -391,7 +424,7 @@ const DailyReport: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal</label>
               <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
-                RWF {overheadPerMeal.toLocaleString()} (from last month)
+                RWF {overheadPerMeal.toLocaleString()} (calculated from last month)
               </div>
             </div>
           </div>
@@ -590,7 +623,7 @@ const DailyReport: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-lg font-bold text-red-900">RWF {reportData ? Math.round(reportData.overhead).toLocaleString() : '0'}</div>
-                  <div className="text-red-700">Overhead ({overheadPercentage}%)</div>
+                  <div className="text-red-700">Overhead per Meal</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-red-900">RWF {reportData ? Math.round(reportData.totalCPM).toLocaleString() : '0'}</div>

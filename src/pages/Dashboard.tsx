@@ -43,10 +43,11 @@ const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [overheadPercentage] = useState(15); // Default overhead percentage
+  const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Will be calculated from last month
 
   useEffect(() => {
     loadDashboardData();
+    loadLastMonthOverhead();
   }, []);
 
   const loadDashboardData = async () => {
@@ -132,21 +133,21 @@ const Dashboard: React.FC = () => {
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const todayCostPerMeal = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
-      const todayOverhead = 65.7; // Last month's overhead per meal
+      const todayOverhead = overheadPerMeal; // Last month's overhead per meal
       const todayCPM = todayCostPerMeal + todayOverhead;
       
       // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const lastWeekCostPerMeal = lastWeekMeals > 0 ? lastWeekIngredientCost / lastWeekMeals : 0;
-      const lastWeekOverhead = 50; // Fixed RWF 50 per meal overhead
+      const lastWeekOverhead = overheadPerMeal; // Use calculated overhead per meal
       const lastWeekCPM = lastWeekCostPerMeal + lastWeekOverhead;
       
       // Current week CPM
       const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const weekIngredientCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
-      const weekOverhead = 50; // Fixed RWF 50 per meal overhead
+      const weekOverhead = overheadPerMeal; // Use calculated overhead per meal
       const currentWeekCPM = weekCostPerMeal + weekOverhead;
 
       // Today's hospital contribution
@@ -217,8 +218,8 @@ const Dashboard: React.FC = () => {
         const weekCostTrend = weekPurchasesTrend.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
         const weekMealsTrend = weekProductionsTrend.reduce((sum: number, prod: any) => sum + (prod.beneficiariesServed || 0), 0);
         
-        const weekCPMTrend = weekMealsTrend > 0 ? 
-          (weekCostTrend / weekMealsTrend) * (1 + overheadPercentage / 100) : 0;
+        const weekCostPerMealTrend = weekMealsTrend > 0 ? weekCostTrend / weekMealsTrend : 0;
+        const weekCPMTrend = weekCostPerMealTrend + overheadPerMeal;
         
         const weekLabel = i === 0 ? 'Current' : `W${5-i}`;
         monthCPMTrend.push({
@@ -244,6 +245,38 @@ const Dashboard: React.FC = () => {
       // Keep default values (zeros) if API fails
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load last month's overhead per meal
+  const loadLastMonthOverhead = async () => {
+    try {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      
+      // Get last month's indirect costs and productions
+      const [indirectCosts, productions] = await Promise.all([
+        indirectCostsAPI.getIndirectCosts({
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1
+        }),
+        productionAPI.getProductions({
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
+        })
+      ]);
+      
+      // Calculate overhead per meal from last month
+      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7; // Fallback to default
+      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      
+    } catch (err: any) {
+      console.error('Failed to load last month overhead:', err);
+      setOverheadPerMeal(65.7); // Use default if calculation fails
     }
   };
 
@@ -532,7 +565,7 @@ const Dashboard: React.FC = () => {
             <h4 className="text-blue-900 font-medium">Real-Time Dashboard</h4>
             <p className="text-blue-800 text-sm mt-1">
               Showing the 4 key metrics: Last Week CPM, Current Week CPM, Today CPM, and Total Meals for Today. 
-              All calculations use real-time data with {overheadPercentage}% overhead.
+              All calculations use real-time data with RWF {overheadPerMeal} overhead per meal (calculated from last month).
             </p>
           </div>
         </div>
