@@ -102,8 +102,17 @@ const DailyReport: React.FC = () => {
       const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7; // Fallback to default
+      console.log('DailyReport - Last month overhead calculation:', {
+        totalOverheadAmount,
+        totalMeals,
+        month: lastMonth.getMonth() + 1,
+        year: lastMonth.getFullYear()
+      });
+      
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
       setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      
+      console.log('DailyReport - Calculated overhead per meal:', calculatedOverheadPerMeal);
       
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);

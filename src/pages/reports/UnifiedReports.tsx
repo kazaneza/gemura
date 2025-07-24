@@ -203,6 +203,47 @@ const UnifiedReports: React.FC = () => {
     });
   };
 
+  // Load last month's overhead per meal
+  const loadLastMonthOverhead = async () => {
+    try {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      
+      // Get last month's indirect costs and productions
+      const [indirectCosts, productions] = await Promise.all([
+        indirectCostsAPI.getIndirectCosts({
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1
+        }),
+        productionAPI.getProductions({
+          start_date: lastMonth.toISOString(),
+          end_date: lastMonthEnd.toISOString()
+        })
+      ]);
+      
+      // Calculate overhead per meal from last month
+      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      
+      console.log('UnifiedReports - Last month overhead calculation:', {
+        totalOverheadAmount,
+        totalMeals,
+        month: lastMonth.getMonth() + 1,
+        year: lastMonth.getFullYear()
+      });
+      
+      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
+      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      
+      console.log('UnifiedReports - Calculated overhead per meal:', calculatedOverheadPerMeal);
+      
+    } catch (err: any) {
+      console.error('Failed to load last month overhead:', err);
+      setOverheadPerMeal(65.7); // Use default if calculation fails
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
