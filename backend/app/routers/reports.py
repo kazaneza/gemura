@@ -79,7 +79,9 @@ async def get_dashboard_data(
     ).all()
     month_indirect_total = sum(c.amount for c in month_indirect_costs)
     
-    month_avg_cpm = (month_ingredient_cost + month_indirect_total) / month_meals if month_meals > 0 else 0
+    # Calculate overhead per meal for this month
+    overhead_per_meal = month_indirect_total / month_meals if month_meals > 0 else 0
+    month_avg_cpm = (month_ingredient_cost / month_meals) + overhead_per_meal if month_meals > 0 else 0
     
     # Yesterday's school contribution
     hospitals_contribution = []

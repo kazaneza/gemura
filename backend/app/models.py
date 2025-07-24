@@ -247,7 +247,7 @@ class IndirectCostBase(SQLModel):
     year: int
     category: str
     description: str
-    amount: float
+    amount: float  # Total amount for the category, not per meal
     code: Optional[str] = None
 
 class IndirectCost(IndirectCostBase, table=True):

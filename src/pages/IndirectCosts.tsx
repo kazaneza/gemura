@@ -117,7 +117,7 @@ const IndirectCosts: React.FC = () => {
       errors.push('Please enter a description');
     }
     if (!newCost.amount || parseFloat(newCost.amount) < 0) {
-      errors.push('Please enter a valid overhead per meal (can be 0)');
+      errors.push('Please enter a valid overhead amount (can be 0)');
     }
     
     setValidationErrors(errors);

@@ -62,11 +62,11 @@ export const calculateWeeklyCPM = (data: WeeklyCostData): number => {
   return Math.round(totalCPM * 100) / 100;
 };
 
-// Monthly overhead per meal calculation
-export const calculateMonthlyOverheadPerMeal = (data: MonthlyCostData): number => {
-  if (data.totalMonthlyMeals <= 0) return 0;
+// Monthly overhead per meal calculation: total overhead amount ÷ total meals
+export const calculateMonthlyOverheadPerMeal = (totalOverheadAmount: number, totalMeals: number): number => {
+  if (totalMeals <= 0) return 0;
   
-  return Math.round((data.totalIndirectCosts / data.totalMonthlyMeals) * 100) / 100;
+  return Math.round((totalOverheadAmount / totalMeals) * 100) / 100;
 };
 
 // Calculate percentage change

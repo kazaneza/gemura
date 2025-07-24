@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
       const todayCostPerMeal = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
-      const todayOverhead = 50; // Fixed RWF 50 per meal overhead
+      const todayOverhead = 65.7; // Last month's overhead per meal
       const todayCPM = todayCostPerMeal + todayOverhead;
       
       // Last week CPM

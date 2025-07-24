@@ -1071,7 +1071,7 @@ const DailyEntry: React.FC = () => {
                 RWF {Math.round(calculations.totalCostPerMeal).toLocaleString()}
               </div>
               <div className="text-sm text-red-700 mt-2">
-                Cost per Meal + Overhead = RWF {Math.round(calculations.costPerMeal).toLocaleString()} + RWF {overheadPerMeal.toLocaleString()}
+                Cost per Meal + Overhead = RWF {Math.round(calculations.costPerMeal).toLocaleString()} + RWF {overheadPerMeal.toFixed(1)}
               </div>
             </div>
           </div>
