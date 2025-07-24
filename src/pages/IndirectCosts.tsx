@@ -520,7 +520,7 @@ const IndirectCosts: React.FC = () => {
                 </div>
                 <div className="bg-red-50 rounded-lg p-4">
                   <div className="text-center">
-                    <div className="text-sm text-red-600 font-medium mb-1">Overhead per Meal (Next Month)</div>
+                    <div className="text-sm text-red-600 font-medium mb-1">Overhead per Meal</div>
                     <div className="text-2xl font-bold text-red-900">RWF {Math.round(overheadPerMealForNextMonth).toLocaleString()}</div>
                     <div className="text-xs text-red-700 mt-1">Total overhead ÷ Total meals</div>
                   </div>
