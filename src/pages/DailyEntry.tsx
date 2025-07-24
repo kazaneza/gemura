@@ -1082,6 +1082,8 @@ const DailyEntry: React.FC = () => {
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm text-purple-600 font-medium">Fixed Overhead per Meal</div>
               </div>
+              <div className="text-2xl font-bold text-purple-900">
+                RWF {overheadPerMeal.toLocaleString()}
               </div>
             </div>
 
