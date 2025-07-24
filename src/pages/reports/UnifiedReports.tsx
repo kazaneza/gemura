@@ -420,14 +420,6 @@ const UnifiedReports: React.FC = () => {
                 </select>
               </div>
             )}
-
-            {/* Overhead per Meal (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal</label>
-              <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
-                RWF {overheadPerMeal.toLocaleString()} (calculated from last month)
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -437,10 +429,59 @@ const UnifiedReports: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900 text-center mb-6">{reportTitle}</h1>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print-section" id="summary-cards">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Total Meals Served</p>
+              <p className="text-2xl font-semibold text-gray-900">{totalMeals.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                <BarChart3 className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">CPM (Ingredients Only)</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm * s.totalMeals, 0) / totalMeals || 0).toLocaleString() : '0'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
+                <Calculator className="h-5 w-5 text-red-600" />
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">CPM + Overhead</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.averageCPM * s.totalMeals, 0) / totalMeals || 0).toLocaleString() : '0'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Service CPM Table */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="service-cpm-table">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Service Cost Per Meal Analysis</h3>
+          <h3 className="text-lg font-medium text-gray-900">Service Breakdown</h3>
         </div>
         <div className="p-6">
           <div className="overflow-x-auto">
@@ -484,36 +525,15 @@ const UnifiedReports: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
                     {/* Empty cells for alignment */}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
+                    {/* Empty cells for alignment */}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
                     {totalMeals.toLocaleString()}
                   </td>
                 </tr>
               </tfoot>
             </table>
-          </div>
-
-          {/* Summary Cards */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-900">{totalMeals.toLocaleString()}</div>
-                <div className="text-sm text-blue-700">Total Meals Served</div>
-              </div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-900">RWF {overheadPerMeal.toLocaleString()}</div>
-                <div className="text-sm text-green-700">Overhead per Meal</div>
-              </div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-900">
-                  {serviceCPMData.length > 0 ? serviceCPMData.filter(s => s.totalMeals > 0).length : 0}
-                </div>
-                <div className="text-sm text-purple-700">Active Services</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
