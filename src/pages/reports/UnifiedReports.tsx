@@ -150,14 +150,13 @@ const UnifiedReports: React.FC = () => {
       services.forEach(service => {
         const servicePurchases = purchases.filter((p: any) => p.service === service);
         const serviceProductions = productions.filter((p: any) => p.service === service);
-        
-        const totalCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
-        const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
-        
-        const cpm = totalMeals > 0 ? totalCost / totalMeals : 0;
-        const totalCPM = totalMeals > 0 ? cpm + overheadPerMeal : 0;
+        serviceData.push({
+          service,
+          totalCost,
           totalMeals,
           cpm: Math.round(cpm),
+          totalCPM: Math.round(totalCPM)
+        });
 
       setServiceCPMData(serviceData);
       setTotalMeals(grandTotalMeals);
