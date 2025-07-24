@@ -1076,18 +1076,12 @@ const DailyEntry: React.FC = () => {
               <div className="text-2xl font-bold text-green-900">
                 RWF {Math.round(calculations.costPerMeal).toLocaleString()}
               </div>
-              <div className="text-xs text-green-700 mt-1">
-                Ingredient Cost ÷ Total Beneficiaries Served
-              </div>
             </div>
 
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm text-purple-600 font-medium">Fixed Overhead per Meal</div>
               </div>
-              <div className="text-2xl font-bold text-purple-900">RWF {overheadPerMeal.toLocaleString()}</div>
-              <div className="text-xs text-purple-700 mt-1">
-                From last month: Total overhead ÷ Total meals
               </div>
             </div>
 
@@ -1095,9 +1089,6 @@ const DailyEntry: React.FC = () => {
               <div className="text-sm text-orange-600 font-medium">Total Service Overhead</div>
               <div className="text-2xl font-bold text-orange-900">
                 RWF {Math.round(calculations.overhead * calculations.totalBeneficiariesServed).toLocaleString()}
-              </div>
-              <div className="text-xs text-orange-700 mt-1">
-                RWF {overheadPerMeal} × {calculations.totalBeneficiariesServed} meals
               </div>
             </div>
           </div>
