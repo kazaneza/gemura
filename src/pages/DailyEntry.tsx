@@ -58,7 +58,7 @@ const DailyEntry: React.FC = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedService, setSelectedService] = useState<MealService>(MealService.BREAKFAST);
-  const [overheadPerMeal, setOverheadPerMeal] = useState(50); // Default overhead per meal in RWF
+  const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Default overhead per meal from last month
   
   // Changed to store entries by service
   const [ingredientEntries, setIngredientEntries] = useState<{ [service: string]: { [key: string]: IngredientEntry } }>({
