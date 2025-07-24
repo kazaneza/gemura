@@ -732,7 +732,7 @@ const WeeklyReport: React.FC = () => {
                     
                     return Object.entries(serviceData).map(([service, data], serviceIndex) => {
                       const costPerMeal = data.meals > 0 ? data.cost / data.meals : 0;
-                      const overhead = overheadPerMeal;
+                      const overhead = costPerMeal * (overheadPercentage / 100);
                       const totalCPM = costPerMeal + overhead;
                       
                       return (
@@ -790,6 +790,7 @@ const WeeklyReport: React.FC = () => {
             <p className="text-blue-800 text-sm mt-1">
               This report uses real-time client-side aggregation for the fastest performance. 
               Data is calculated using the same "pax not mealsCalculated" logic as Daily Entry.
+              Overhead per meal (RWF {overheadPerMeal}) is calculated from last month's data.
             </p>
           </div>
         </div>

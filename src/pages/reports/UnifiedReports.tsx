@@ -384,7 +384,7 @@ const UnifiedReports: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Overhead per Meal</label>
               <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-900">
-                RWF {overheadPerMeal.toLocaleString()} (from last month)
+                RWF {overheadPerMeal.toLocaleString()} (calculated from last month)
               </div>
             </div>
           </div>
