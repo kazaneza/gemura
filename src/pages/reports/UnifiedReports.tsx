@@ -155,10 +155,12 @@ const UnifiedReports: React.FC = () => {
         const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         
         let cpm = 0;
+        let totalCPM = 0;
         
         if (totalMeals > 0) {
           const costPerMeal = totalCost / totalMeals;
           cpm = costPerMeal;
+          totalCPM = cpm + overheadPerMeal; // CPM + Overhead = Total CPM
         }
 
         serviceData.push({
@@ -166,6 +168,7 @@ const UnifiedReports: React.FC = () => {
           totalCost,
           totalMeals,
           cpm: Math.round(cpm),
+          totalCPM: Math.round(totalCPM),
         });
 
         grandTotalMeals += totalMeals;
@@ -469,7 +472,7 @@ const UnifiedReports: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">CPM + Overhead</p>
               <p className="text-2xl font-semibold text-gray-900">
-                RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.averageCPM * s.totalMeals, 0) / totalMeals || 0).toLocaleString() : '0'}
+                RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals || 0).toLocaleString() : '0'}
               </p>
             </div>
           </div>
@@ -491,7 +494,7 @@ const UnifiedReports: React.FC = () => {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Meals Served</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CPM</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overhead</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Meals</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total CPM</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -512,13 +515,13 @@ const UnifiedReports: React.FC = () => {
                       {service.totalMeals.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-purple-600">
-                      RWF {service.cpm.toLocaleString()}
+                      {service.totalMeals > 0 ? `RWF ${service.cpm.toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-orange-600">
-                      RWF {Math.round(overheadPerMeal).toLocaleString()}
+                      {service.totalMeals > 0 ? `RWF ${Math.round(overheadPerMeal).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
-                      RWF {(service.cpm + overheadPerMeal).toLocaleString()}
+                      {service.totalMeals > 0 ? `RWF ${service.totalCPM.toLocaleString()}` : '-'}
                     </td>
                   </tr>
                 ))}
