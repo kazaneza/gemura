@@ -233,7 +233,7 @@ const DailyReport: React.FC = () => {
               </div>
               <div class="summary-card">
                 <div class="value">RWF ${reportData ? Math.round(reportData.overhead).toLocaleString() : '0'}</div>
-                <div class="label">Overhead (${overheadPercentage}%)</div>
+                <div class="label">Overhead per Meal</div>
               </div>
               <div class="summary-card">
                 <div class="value">RWF ${reportData ? Math.round(reportData.totalCPM).toLocaleString() : '0'}</div>
@@ -598,7 +598,7 @@ const DailyReport: React.FC = () => {
                 </div>
               </div>
               <div className="text-sm text-red-700 mt-4">
-                Calculation: RWF {reportData ? Math.round(reportData.costPerMeal).toLocaleString() : '0'} + RWF {reportData ? Math.round(reportData.overhead).toLocaleString() : '0'} = RWF {reportData ? Math.round(reportData.totalCPM).toLocaleString() : '0'}
+                Calculation: RWF {reportData ? Math.round(reportData.costPerMeal).toLocaleString() : '0'} + RWF {overheadPerMeal.toLocaleString()} = RWF {reportData ? Math.round(reportData.totalCPM).toLocaleString() : '0'}
               </div>
             </div>
           </div>

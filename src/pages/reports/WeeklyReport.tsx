@@ -358,7 +358,7 @@ const WeeklyReport: React.FC = () => {
               </div>
               <div class="summary-card">
                 <div class="value">RWF ${Math.round(weeklySummary.overhead).toLocaleString()}</div>
-                <div class="label">Overhead (${overheadPercentage}%)</div>
+                <div class="label">Overhead per Meal</div>
               </div>
               <div class="summary-card">
                 <div class="value">RWF ${Math.round(weeklySummary.totalCPM).toLocaleString()}</div>
@@ -405,7 +405,7 @@ const WeeklyReport: React.FC = () => {
                   <th>Meals Served</th>
                   <th>Ingredient Cost</th>
                   <th>Cost/Meal</th>
-                  <th>Overhead (${overheadPercentage}%)</th>
+                  <th>Overhead per Meal</th>
                   <th>Total CPM</th>
                 </tr>
               </thead>

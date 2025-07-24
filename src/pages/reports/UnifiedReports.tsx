@@ -468,8 +468,8 @@ const UnifiedReports: React.FC = () => {
             </div>
             <div className="bg-green-50 rounded-lg p-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-900">{overheadPercentage}%</div>
-                <div className="text-sm text-green-700">Overhead Percentage</div>
+                <div className="text-2xl font-bold text-green-900">RWF {overheadPerMeal.toLocaleString()}</div>
+                <div className="text-sm text-green-700">Overhead per Meal</div>
               </div>
             </div>
             <div className="bg-purple-50 rounded-lg p-4">
