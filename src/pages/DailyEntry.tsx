@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Check, X, Calendar, AlertCircle, Calculator, Edit2, Eye, Trash2, Coffee, Utensils, Moon } from 'lucide-react';
 import { hospitalsAPI, ingredientsAPI, purchasesAPI, productionAPI, indirectCostsAPI } from '../services/api';
+import MonthSelector from '../components/MonthSelector';
+import { generateAvailableMonths, getCurrentMonth, getMonthId, parseMonthId } from '../utils/monthlySystem';
 
 enum MealService {
   BREAKFAST = "BREAKFAST",
@@ -58,6 +60,7 @@ const DailyEntry: React.FC = () => {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedService, setSelectedService] = useState<MealService>(MealService.BREAKFAST);
+  const [selectedMonth, setSelectedMonth] = useState(getMonthId(getCurrentMonth()));
   const [overheadPerMeal, setOverheadPerMeal] = useState(0); // Will be calculated from last month's data
   
   // Changed to store entries by service
@@ -81,12 +84,20 @@ const DailyEntry: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showExistingEntries, setShowExistingEntries] = useState(true);
 
+  const availableMonths = generateAvailableMonths();
+  const currentMonthInfo = parseMonthId(selectedMonth);
+
   // Load initial data
   useEffect(() => {
     loadInitialData();
-    loadExistingEntries();
     loadLastMonthOverhead();
   }, []);
+
+  // Load entries when month changes
+  useEffect(() => {
+    loadExistingEntries();
+    loadMonthlyMeals();
+  }, [selectedMonth]);
 
   // Initialize with one empty item
   useEffect(() => {
@@ -162,13 +173,13 @@ const DailyEntry: React.FC = () => {
 
   const loadExistingEntries = async () => {
     try {
-      // Get current month's entries
-      const today = new Date();
-      const startDate = new Date(today.getFullYear(), today.getMonth(), 1); // First day of current month
+      // Get selected month's entries
+      const monthInfo = parseMonthId(selectedMonth);
+      const startDate = new Date(monthInfo.year, monthInfo.month - 1, 1); // First day of selected month
+      const endDate = new Date(monthInfo.year, monthInfo.month, 0); // Last day of selected month
       
-      // Set time to start of month for startDate and end of day for endDate
+      // Set time to start of month for startDate and end of day for endDate  
       startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(today);
       endDate.setHours(23, 59, 59, 999);
 
       const [purchases, productions] = await Promise.all([
@@ -246,6 +257,29 @@ const DailyEntry: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to load existing entries:', err);
       setExistingEntries([]); // Set empty array on error
+    }
+  };
+
+  // Load total meals for the selected month (for overhead calculation display)
+  const [totalMealsForMonth, setTotalMealsForMonth] = useState(0);
+
+  const loadMonthlyMeals = async () => {
+    try {
+      const monthInfo = parseMonthId(selectedMonth);
+      const startDate = new Date(monthInfo.year, monthInfo.month - 1, 1);
+      const endDate = new Date(monthInfo.year, monthInfo.month, 0);
+      endDate.setDate(endDate.getDate() + 1);
+
+      const productions = await productionAPI.getProductions({
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
+
+      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      setTotalMealsForMonth(totalMeals);
+    } catch (err: any) {
+      console.error('Failed to load monthly meals:', err);
+      setTotalMealsForMonth(0);
     }
   };
 
@@ -788,7 +822,7 @@ const DailyEntry: React.FC = () => {
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">
-              Current Month Entries ({new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})
+              {currentMonthInfo.monthName} Entries
             </h3>
             <button
               onClick={() => setShowExistingEntries(!showExistingEntries)}
@@ -801,14 +835,27 @@ const DailyEntry: React.FC = () => {
         </div>
         {showExistingEntries && (
           <div className="p-6">
+            {/* Month Selection */}
+            <div className="mb-6">
+              <MonthSelector
+                availableMonths={availableMonths}
+                selectedMonth={selectedMonth}
+                onMonthChange={setSelectedMonth}
+                showStatus={false}
+              />
+            </div>
+
             {existingEntries.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No entries found for this month
+                No entries found for {currentMonthInfo.monthName}
               </div>
             ) : (
               <>
                 {/* Monthly Summary */}
                 <div className="mb-6 bg-blue-50 rounded-lg p-4">
+                  <div className="text-center mb-4">
+                    <h4 className="text-lg font-semibold text-blue-900">{currentMonthInfo.monthName} Summary</h4>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-blue-900">
@@ -826,7 +873,7 @@ const DailyEntry: React.FC = () => {
                       <div className="text-2xl font-bold text-blue-900">
                         {existingEntries.length}
                       </div>
-                      <div className="text-sm text-blue-700">Days with Data</div>
+                      <div className="text-sm text-blue-700">Days with Data in {currentMonthInfo.monthName}</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-blue-900">
@@ -835,7 +882,7 @@ const DailyEntry: React.FC = () => {
                           existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0)
                         ).toLocaleString() : '0'}
                       </div>
-                      <div className="text-sm text-blue-700">Average CPM</div>
+                      <div className="text-sm text-blue-700">Average CPM for {currentMonthInfo.monthName}</div>
                     </div>
                   </div>
                 </div>
@@ -1160,7 +1207,7 @@ const DailyEntry: React.FC = () => {
                 <div>Total Ingredient Cost: RWF {calculations.totalIngredientCost.toLocaleString()}</div>
                 <div>Total Overhead Cost: RWF {calculations.totalOverheadCost.toLocaleString()}</div>
                 <div>Total Meals Served: {calculations.totalBeneficiariesServed.toLocaleString()}</div>
-                <div>Overhead per Meal: RWF {overheadPerMeal.toLocaleString()}</div>
+                <div>Overhead per Meal: RWF {overheadPerMeal.toLocaleString()} (from previous month)</div>
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
@@ -1168,7 +1215,7 @@ const DailyEntry: React.FC = () => {
               <div className="space-y-1 text-gray-700 text-xs">
                 <div>1. Total Overhead Cost = Overhead per meal × Total meals</div>
                 <div>2. CPM = (Ingredient cost + Overhead cost) ÷ Total meals</div>
-                <div>3. Overhead per meal = RWF {overheadPerMeal} (from last month)</div>
+                <div>3. Overhead per meal = RWF {overheadPerMeal} (from previous month's data)</div>
               </div>
             </div>
           </div>
