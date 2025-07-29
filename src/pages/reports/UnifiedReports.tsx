@@ -523,13 +523,33 @@ const UnifiedReports: React.FC = () => {
                     {totalMeals.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    {/* CPM Average */}
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCost, 0) / totalMeals).toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                    {/* Overhead */}
+                    RWF {Math.round(overheadPerMeal).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    {/* Total CPM */}
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + s.totalCost, 0) + (totalMeals * overheadPerMeal)) / totalMeals).toLocaleString() : '0'}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                    Average
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
+                    RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0) / serviceCPMData.length).toLocaleString() : '0'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
+                    {serviceCPMData.length > 0 ? Math.round(totalMeals / serviceCPMData.length).toLocaleString() : '0'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
+                    RWF {Math.round(overheadPerMeal).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
                   </td>
                 </tr>
               </tfoot>
