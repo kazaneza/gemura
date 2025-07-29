@@ -482,7 +482,7 @@ const UnifiedReports: React.FC = () => {
                       {service.totalMeals.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
-                      {service.totalMeals > 0 ? `RWF ${Math.round(((service.totalCost || 0) + (service.totalMeals * overheadPerMeal)) / service.totalMeals).toLocaleString()}` : '-'}
+                      RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals > 0 ? ((s.totalCost || 0) + (s.totalMeals * overheadPerMeal)) / s.totalMeals : 0), 0) / 3).toLocaleString()}
                     </td>
                   </tr>
                 ))}
