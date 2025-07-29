@@ -135,8 +135,9 @@ const IndirectCosts: React.FC = () => {
   };
 
   // Add new cost
-  const totalOverheadPerMeal = costs.reduce((sum, cost) => sum + cost.amount, 0);
-  const totalOverheadAmountForMonth = totalOverheadPerMeal * totalMealsForMonth;
+  const addCost = async () => {
+    if (!validateForm()) {
+      return;
     }
 
     try {
@@ -235,6 +236,8 @@ const IndirectCosts: React.FC = () => {
       </div>
     );
   }
+
+  const totalOverheadAmountForMonth = totalOverheadPerMeal * totalMealsForMonth;
 
   return (
     <div className="space-y-6">
