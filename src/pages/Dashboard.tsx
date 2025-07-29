@@ -155,9 +155,9 @@ const Dashboard: React.FC = () => {
       const lastMonthCPM = calculateServiceBasedCPM(lastMonthPurchases, lastMonthProductions, calculatedOverheadPerMeal);
 
       setDashboardData({
-        lastMonthCPM: Math.round(lastMonthCPM),
-        lastWeekCPM: Math.round(lastWeekCPM),
-        todayCPM: Math.round(todayCPM),
+        lastMonthCPM: lastMonthCPM,
+        lastWeekCPM: lastWeekCPM,
+        todayCPM: todayCPM,
         lastMonthMeals: lastMonthTotalMeals,
         lastWeekMeals: lastWeekMeals,
         todayMeals,
@@ -227,7 +227,7 @@ const Dashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">Last Month CPM</dt>
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
-                      RWF {dashboardData.lastMonthCPM.toLocaleString()}
+                      RWF {Math.round(dashboardData.lastMonthCPM).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {dashboardData.lastMonthMeals.toLocaleString()} meals
@@ -252,7 +252,7 @@ const Dashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">Last Week CPM</dt>
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
-                      RWF {dashboardData.lastWeekCPM.toLocaleString()}
+                      RWF {Math.round(dashboardData.lastWeekCPM).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {dashboardData.lastWeekMeals.toLocaleString()} meals
@@ -277,7 +277,7 @@ const Dashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">Today CPM</dt>
                   <dd>
                     <div className="text-2xl font-semibold text-gray-900">
-                      RWF {dashboardData.todayCPM.toLocaleString()}
+                      RWF {Math.round(dashboardData.todayCPM).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {dashboardData.todayMeals.toLocaleString()} meals
