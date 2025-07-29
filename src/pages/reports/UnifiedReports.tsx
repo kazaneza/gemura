@@ -479,8 +479,6 @@ const UnifiedReports: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient Cost</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Meals Served</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CPM</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overhead</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total CPM</th>
                 </tr>
               </thead>
@@ -501,12 +499,6 @@ const UnifiedReports: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
                       {service.totalMeals.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-purple-600">
-                      {service.totalMeals > 0 ? `RWF ${Math.round(service.cpm).toLocaleString()}` : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-orange-600">
-                      {service.totalMeals > 0 ? `RWF ${Math.round(service.totalMeals * overheadPerMeal).toLocaleString()}` : '-'}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
                       {service.totalMeals > 0 ? `RWF ${Math.round(((service.totalCost || 0) + (service.totalMeals * overheadPerMeal)) / service.totalMeals).toLocaleString()}` : '-'}
                     </td>
@@ -525,12 +517,6 @@ const UnifiedReports: React.FC = () => {
                     {totalMeals.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                    RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
                     RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0) + serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)) / totalMeals).toLocaleString() : '0'}
                   </td>
                 </tr>
@@ -543,12 +529,6 @@ const UnifiedReports: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
                     {Math.round(totalMeals / 3).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                    RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm, 0) / 3).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
-                    RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0) / 3).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
                     RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals > 0 ? ((s.totalCost || 0) + (s.totalMeals * overheadPerMeal)) / s.totalMeals : 0), 0) / 3).toLocaleString()}
