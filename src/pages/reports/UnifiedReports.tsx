@@ -155,15 +155,16 @@ const UnifiedReports: React.FC = () => {
         const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
         
         // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
-        const totalOverheadCost = totalMeals * overheadPerMeal;
-        const calculatedCPM = totalMeals > 0 ? ((totalMeals * overheadPerMeal) + totalIngredientCost) / totalMeals : 0;
+        // This simplifies to: CPM = overhead + (ingredient cost ÷ meals)
+        const calculatedCPM = totalMeals > 0 ? (totalIngredientCost / totalMeals) + overheadPerMeal : 0;
         
         serviceData.push({
           service,
           totalCost: totalIngredientCost,
           totalMeals,
           cpm: calculatedCPM,
-          totalCPM: calculatedCPM
+          totalCPM: calculatedCPM,
+          overheadCost: totalMeals * overheadPerMeal
         });
         
         grandTotalMeals += totalMeals;

@@ -112,25 +112,22 @@ const Dashboard: React.FC = () => {
       // Today's meals and CPM
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      // Use the same CPM calculation logic from Daily Entry
-      // CPM = (Total Ingredient Cost + Total Overhead Cost) ÷ Total Meals
+      // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
+      // This simplifies to: CPM = overhead + (ingredient cost ÷ meals)
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const todayOverheadCost = todayMeals * calculatedOverheadPerMeal;
-      const todayCPM = todayMeals > 0 ? (todayIngredientCost + todayOverheadCost) / todayMeals : 0;
+      const todayCPM = todayMeals > 0 ? (todayIngredientCost / todayMeals) + calculatedOverheadPerMeal : 0;
       
       // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      // Use the same CPM calculation logic from Daily Entry
+      // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
       const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const lastWeekOverheadCost = lastWeekMeals * calculatedOverheadPerMeal;
-      const lastWeekCPM = lastWeekMeals > 0 ? (lastWeekIngredientCost + lastWeekOverheadCost) / lastWeekMeals : 0;
+      const lastWeekCPM = lastWeekMeals > 0 ? (lastWeekIngredientCost / lastWeekMeals) + calculatedOverheadPerMeal : 0;
       
       // Last month CPM
-      // Use the same CPM calculation logic from Daily Entry
+      // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
       const lastMonthIngredientCost = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const lastMonthOverheadCost = lastMonthTotalMeals * calculatedOverheadPerMeal;
-      const lastMonthCPM = lastMonthTotalMeals > 0 ? (lastMonthIngredientCost + lastMonthOverheadCost) / lastMonthTotalMeals : 0;
+      const lastMonthCPM = lastMonthTotalMeals > 0 ? (lastMonthIngredientCost / lastMonthTotalMeals) + calculatedOverheadPerMeal : 0;
 
       setDashboardData({
         lastMonthCPM: Math.round(lastMonthCPM),
