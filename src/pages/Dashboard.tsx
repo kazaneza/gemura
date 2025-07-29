@@ -35,8 +35,7 @@ const Dashboard: React.FC = () => {
   // Calculate service-based CPM like in Reports
   const calculateServiceBasedCPM = (purchases: any[], productions: any[], overheadPerMeal: number) => {
     const services = ['BREAKFAST', 'LUNCH', 'DINNER'];
-    let totalServiceCPM = 0;
-    let serviceCount = 0;
+    const serviceCPMs: number[] = [];
     
     services.forEach(service => {
       const servicePurchases = purchases.filter((p: any) => p.service === service);
@@ -45,16 +44,13 @@ const Dashboard: React.FC = () => {
       const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
       const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
       
-      // Use exact formula from Reports: CPM = ((meals × overhead) + ingredient cost) ÷ meals
-      if (totalMeals > 0) {
-        const calculatedCPM = ((totalMeals * overheadPerMeal) + totalIngredientCost) / totalMeals;
-        totalServiceCPM += calculatedCPM;
-        serviceCount++;
-      }
+      // Use EXACT formula from Reports: CPM = (ingredient cost ÷ meals) + overhead
+      const calculatedCPM = totalMeals > 0 ? (totalIngredientCost / totalMeals) + overheadPerMeal : 0;
+      serviceCPMs.push(calculatedCPM);
     });
     
-    // Return average of the service CPMs (same as Reports)
-    return serviceCount > 0 ? totalServiceCPM / serviceCount : 0;
+    // Return average of ALL 3 service CPMs (same as Reports - always divide by 3)
+    return serviceCPMs.reduce((sum, cpm) => sum + cpm, 0) / 3;
   };
   const loadDashboardData = async () => {
     try {
