@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
   // Calculate service-based CPM like in Reports
   const calculateServiceBasedCPM = (purchases: any[], productions: any[], overheadPerMeal: number) => {
     const services = ['BREAKFAST', 'LUNCH', 'DINNER'];
-    let totalServiceCPM = 0;
+    const serviceCPMs: number[] = [];
     
     services.forEach(service => {
       const servicePurchases = purchases.filter((p: any) => p.service === service);
@@ -44,13 +44,29 @@ const Dashboard: React.FC = () => {
       const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
       const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
       
-      // EXACT same calculation as Reports Average row
+      // EXACT same calculation as Reports table shows for each service
       const serviceCPM = totalMeals > 0 ? ((totalIngredientCost + (totalMeals * overheadPerMeal)) / totalMeals) : 0;
-      totalServiceCPM += serviceCPM;
+      serviceCPMs.push(serviceCPM);
+      
+      console.log(`Dashboard ${service}:`, {
+        totalMeals,
+        totalIngredientCost,
+        overheadPerMeal,
+        serviceCPM: Math.round(serviceCPM)
+      });
     });
     
-    // Always divide by 3 (same as Reports)
-    return Math.round(totalServiceCPM / 3);
+    // Sum all service CPMs and divide by 3 (same as Reports Average)
+    const sum = serviceCPMs.reduce((total, cpm) => total + cpm, 0);
+    const average = sum / 3;
+    
+    console.log('Dashboard calculation:', {
+      serviceCPMs: serviceCPMs.map(cpm => Math.round(cpm)),
+      sum: Math.round(sum),
+      average: Math.round(average)
+    });
+    
+    return Math.round(average);
   };
   const loadDashboardData = async () => {
     try {
