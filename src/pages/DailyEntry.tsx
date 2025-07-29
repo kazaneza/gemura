@@ -162,12 +162,11 @@ const DailyEntry: React.FC = () => {
 
   const loadExistingEntries = async () => {
     try {
-      // Get last 7 days of entries
+      // Get current month's entries
       const today = new Date();
-      const startDate = new Date();
-      startDate.setDate(today.getDate() - 6); // Include today + 6 previous days = 7 days total
+      const startDate = new Date(today.getFullYear(), today.getMonth(), 1); // First day of current month
       
-      // Set time to start of day for startDate and end of day for endDate
+      // Set time to start of month for startDate and end of day for endDate
       startDate.setHours(0, 0, 0, 0);
       const endDate = new Date(today);
       endDate.setHours(23, 59, 59, 999);
@@ -788,7 +787,9 @@ const DailyEntry: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Recent Meal Service Entries (Last 7 Days)</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Current Month Entries ({new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})
+            </h3>
             <button
               onClick={() => setShowExistingEntries(!showExistingEntries)}
               className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -802,71 +803,132 @@ const DailyEntry: React.FC = () => {
           <div className="p-6">
             {existingEntries.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No recent entries found
+                No entries found for this month
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient Cost</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Meals</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost/Meal</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overhead</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total CPM</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {existingEntries.map((entry) => (
-                      <tr key={entry.date} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {new Date(entry.date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
+              <>
+                {/* Monthly Summary */}
+                <div className="mb-6 bg-blue-50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-900">
+                        {existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-blue-700">Total Meals This Month</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-900">
+                        RWF {existingEntries.reduce((sum, entry) => sum + entry.totalCost, 0).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-blue-700">Total Ingredient Cost</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-900">
+                        {existingEntries.length}
+                      </div>
+                      <div className="text-sm text-blue-700">Days with Data</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-900">
+                        RWF {existingEntries.length > 0 ? Math.round(
+                          existingEntries.reduce((sum, entry) => sum + entry.totalCPM * entry.totalMeals, 0) / 
+                          existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0)
+                        ).toLocaleString() : '0'}
+                      </div>
+                      <div className="text-sm text-blue-700">Average CPM</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Entries Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient Cost</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Meals</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overhead Cost</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total CPM</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {existingEntries.map((entry) => (
+                        <tr key={entry.date} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <div>
+                              {new Date(entry.date).toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric' })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            RWF {entry.totalCost.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {entry.totalMeals.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            RWF {Math.round(entry.totalMeals * overheadPerMeal).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                            RWF {Math.round(entry.totalCPM).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => loadEntryForEditing(entry.date)}
+                                disabled={loading}
+                                className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                title="Edit entry"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteEntry(entry.date)}
+                                disabled={loading}
+                                className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                title="Delete entry"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-gray-50">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">TOTAL</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                          RWF {existingEntries.reduce((sum, entry) => sum + entry.totalCost, 0).toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          RWF {entry.totalCost.toLocaleString()}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                          {existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0).toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {entry.totalMeals.toLocaleString()}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                          RWF {Math.round(existingEntries.reduce((sum, entry) => sum + (entry.totalMeals * overheadPerMeal), 0)).toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          RWF {Math.round(entry.costPerMeal).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          RWF {Math.round(entry.overhead).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                          RWF {Math.round(entry.totalCPM).toLocaleString()}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                          RWF {existingEntries.length > 0 ? Math.round(
+                            existingEntries.reduce((sum, entry) => sum + entry.totalCPM * entry.totalMeals, 0) / 
+                            existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0)
+                          ).toLocaleString() : '0'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => loadEntryForEditing(entry.date)}
-                              disabled={loading}
-                              className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                              title="Edit entry"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => deleteEntry(entry.date)}
-                              disabled={loading}
-                              className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                              title="Delete entry"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
+                          {existingEntries.length} entries
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
               </div>
             )}
           </div>
