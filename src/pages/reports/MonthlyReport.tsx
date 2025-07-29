@@ -102,8 +102,8 @@ const MonthlyReport: React.FC = () => {
         const weekIngredientCost = weekPurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
         const weekMeals = weekProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         
-        const weekCostPerMeal = weekMeals > 0 ? weekIngredientCost / weekMeals : 0;
-        const weekTotalCPM = weekCostPerMeal + overheadPerMeal;
+        const weekOverheadCost = weekMeals * overheadPerMeal;
+        const weekCostPerMeal = weekMeals > 0 ? (weekIngredientCost + weekOverheadCost) / weekMeals : 0;
         
         if (weekMeals > 0 || weekIngredientCost > 0) {
           weeks.push({
@@ -113,7 +113,7 @@ const MonthlyReport: React.FC = () => {
             ingredientCost: weekIngredientCost,
             costPerMeal: weekCostPerMeal,
             overheadPerMeal,
-            totalCPM: weekTotalCPM
+            totalCPM: weekCostPerMeal // Same as costPerMeal since overhead is included
           });
         }
         
@@ -180,8 +180,9 @@ const MonthlyReport: React.FC = () => {
   };
 
   if (monthlyTotals.totalMealsServed > 0) {
-    monthlyTotals.averageCPM = monthlyTotals.totalIngredientCosts / monthlyTotals.totalMealsServed;
-    monthlyTotals.totalCPM = monthlyTotals.averageCPM + overheadPerMeal;
+    const totalOverheadCosts = monthlyTotals.totalMealsServed * overheadPerMeal;
+    monthlyTotals.averageCPM = (monthlyTotals.totalIngredientCosts + totalOverheadCosts) / monthlyTotals.totalMealsServed;
+    monthlyTotals.totalCPM = monthlyTotals.averageCPM; // Same as averageCPM since overhead is included
   }
 
   const handleExportPDF = () => {

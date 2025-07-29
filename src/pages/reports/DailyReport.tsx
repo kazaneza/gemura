@@ -48,11 +48,11 @@ const DailyReport: React.FC = () => {
 
       // Calculate metrics using same logic as Daily Entry
       const totalIngredientCost = purchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
-      // Fixed: Total meals is sum of patientsServed, not beneficiaries or mealsCalculated
       const totalMeals = productions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
-      const costPerMeal = totalMeals > 0 ? totalIngredientCost / totalMeals : 0;
-      const overhead = overheadPerMeal; // Fixed overhead per meal from last month
-      const totalCPM = costPerMeal + overhead;
+      const totalOverheadCost = totalMeals * overheadPerMeal;
+      const costPerMeal = totalMeals > 0 ? (totalIngredientCost + totalOverheadCost) / totalMeals : 0;
+      const overhead = overheadPerMeal;
+      const totalCPM = costPerMeal; // Same as costPerMeal since overhead is included
 
       const hospitalsServed = new Set(productions.map((p: any) => p.hospitalId)).size;
       const ingredientsUsed = purchases.filter((p: any) => p.quantity > 0).length;
@@ -62,6 +62,7 @@ const DailyReport: React.FC = () => {
         purchases,
         productions,
         totalIngredientCost,
+        totalOverheadCost,
         totalMeals,
         costPerMeal,
         overhead,
@@ -84,39 +85,31 @@ const DailyReport: React.FC = () => {
     try {
       const today = new Date();
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
       
-      // Get last month's indirect costs and productions
-      const [indirectCosts, productions] = await Promise.all([
+      // Get last month's indirect costs (which are now per meal amounts)
+      const indirectCosts = await Promise.all([
         indirectCostsAPI.getIndirectCosts({
           year: lastMonth.getFullYear(),
           month: lastMonth.getMonth() + 1
-        }),
-        productionAPI.getProductions({
-          start_date: lastMonth.toISOString(),
-          end_date: lastMonthEnd.toISOString()
         })
       ]);
       
-      // Calculate overhead per meal from last month
-      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
-      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      // Sum up overhead per meal amounts from last month
+      const totalOverheadPerMeal = indirectCosts[0].reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       
       console.log('DailyReport - Last month overhead calculation:', {
-        totalOverheadAmount,
-        totalMeals,
+        totalOverheadPerMeal,
         month: lastMonth.getMonth() + 1,
         year: lastMonth.getFullYear()
       });
       
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
-      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      setOverheadPerMeal(Math.round(totalOverheadPerMeal * 100) / 100);
       
-      console.log('DailyReport - Calculated overhead per meal:', calculatedOverheadPerMeal);
+      console.log('DailyReport - Calculated overhead per meal:', totalOverheadPerMeal);
       
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);
-      setOverheadPerMeal(65.7); // Use default if calculation fails
+      setOverheadPerMeal(0); // Use 0 if calculation fails
     }
   };
 

@@ -54,12 +54,14 @@ const WeeklyReport: React.FC = () => {
   // Calculate metrics for each service
   Object.keys(serviceBreakdown).forEach(service => {
     const data = serviceBreakdown[service as keyof typeof serviceBreakdown];
-    data.totalCost = data.purchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
+    const ingredientCost = data.purchases.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
     data.totalMeals = data.productions.reduce((sum, p) => sum + (p.patientsServed || 0), 0);
+    const overheadCost = data.totalMeals * overheadPerMeal;
+    data.totalCost = ingredientCost;
     if (data.totalMeals > 0) {
-      data.costPerMeal = data.totalCost / data.totalMeals;
-      data.overhead = overheadPerMeal; // Fixed overhead per meal from last month
-      data.totalCPM = data.costPerMeal + data.overhead;
+      data.costPerMeal = (ingredientCost + overheadCost) / data.totalMeals;
+      data.overhead = overheadPerMeal;
+      data.totalCPM = data.costPerMeal; // Same as costPerMeal since overhead is included
     }
   });
 
@@ -163,15 +165,13 @@ const WeeklyReport: React.FC = () => {
   const weeklySummary = {
     totalMealsServed: productions.reduce((sum, prod) => sum + (prod.patientsServed || 0), 0),
     totalIngredientCost: purchases.reduce((sum, purchase) => sum + (purchase.totalPrice || 0), 0),
-    costPerMeal: 0,
-    overhead: 0,
-    totalCPM: 0
+    totalOverheadCost: 0,
+    costPerMeal: 0
   };
 
   if (weeklySummary.totalMealsServed > 0) {
-    weeklySummary.costPerMeal = weeklySummary.totalIngredientCost / weeklySummary.totalMealsServed;
-    weeklySummary.overhead = overheadPerMeal; // Fixed overhead per meal from last month
-    weeklySummary.totalCPM = weeklySummary.costPerMeal + weeklySummary.overhead;
+    weeklySummary.totalOverheadCost = weeklySummary.totalMealsServed * overheadPerMeal;
+    weeklySummary.costPerMeal = (weeklySummary.totalIngredientCost + weeklySummary.totalOverheadCost) / weeklySummary.totalMealsServed;
   }
 
   // Generate daily breakdown
@@ -210,35 +210,27 @@ const WeeklyReport: React.FC = () => {
     try {
       const today = new Date();
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
       
-      // Get last month's indirect costs and productions
-      const [indirectCosts, productions] = await Promise.all([
+      // Get last month's indirect costs (which are now per meal amounts)
+      const indirectCosts = await Promise.all([
         indirectCostsAPI.getIndirectCosts({
           year: lastMonth.getFullYear(),
           month: lastMonth.getMonth() + 1
-        }),
-        productionAPI.getProductions({
-          start_date: lastMonth.toISOString(),
-          end_date: lastMonthEnd.toISOString()
         })
       ]);
       
-      // Calculate overhead per meal from last month
-      const totalOverheadAmount = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
-      const totalMeals = productions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      // Sum up overhead per meal amounts from last month
+      const totalOverheadPerMeal = indirectCosts[0].reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       
       console.log('WeeklyReport - Last month overhead calculation:', {
-        totalOverheadAmount,
-        totalMeals,
+        totalOverheadPerMeal,
         month: lastMonth.getMonth() + 1,
         year: lastMonth.getFullYear()
       });
       
-      const calculatedOverheadPerMeal = totalMeals > 0 ? totalOverheadAmount / totalMeals : 65.7;
-      setOverheadPerMeal(Math.round(calculatedOverheadPerMeal * 100) / 100);
+      setOverheadPerMeal(Math.round(totalOverheadPerMeal * 100) / 100);
       
-      console.log('WeeklyReport - Calculated overhead per meal:', calculatedOverheadPerMeal);
+      console.log('WeeklyReport - Calculated overhead per meal:', totalOverheadPerMeal);
       
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);
@@ -628,8 +620,8 @@ const WeeklyReport: React.FC = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Overhead ({overheadPercentage}%)</p>
-              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(weeklySummary.overhead).toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-500">Total Overhead Cost</p>
+              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(weeklySummary.totalOverheadCost).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -642,8 +634,8 @@ const WeeklyReport: React.FC = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total CPM</p>
-              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(weeklySummary.totalCPM).toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-500">Cost per Meal</p>
+              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(weeklySummary.costPerMeal).toLocaleString()}</p>
             </div>
           </div>
         </div>
