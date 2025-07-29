@@ -878,11 +878,11 @@ const DailyEntry: React.FC = () => {
                     <div>
                       <div className="text-2xl font-bold text-blue-900">
                         RWF {existingEntries.length > 0 ? Math.round(
-                          existingEntries.reduce((sum, entry) => sum + entry.totalCPM * entry.totalMeals, 0) / 
+                      RWF {Math.round(totalIngredientCost / totalMeals + overheadPerMeal).toLocaleString()}
                           existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0)
                         ).toLocaleString() : '0'}
                       </div>
-                      <div className="text-sm text-blue-700">Average CPM for {currentMonthInfo.monthName}</div>
+                      Ingredient CPM + Overhead per Meal
                     </div>
                   </div>
                 </div>
