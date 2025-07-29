@@ -505,10 +505,10 @@ const UnifiedReports: React.FC = () => {
                       {service.totalMeals > 0 ? `RWF ${Math.round(service.cpm).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-orange-600">
-                      {service.totalMeals > 0 ? `RWF ${Math.round(overheadPerMeal).toLocaleString()}` : '-'}
+                      {service.totalMeals > 0 ? `RWF ${Math.round(service.totalMeals * overheadPerMeal).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
-                      {service.totalMeals > 0 ? `RWF ${Math.round(service.totalCPM).toLocaleString()}` : '-'}
+                      {service.totalMeals > 0 ? `RWF ${Math.round(((service.totalCost || 0) + (service.totalMeals * overheadPerMeal)) / service.totalMeals).toLocaleString()}` : '-'}
                     </td>
                   </tr>
                 ))}
@@ -528,10 +528,10 @@ const UnifiedReports: React.FC = () => {
                     RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                    RWF {Math.round(overheadPerMeal).toLocaleString()}
+                    RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0) + serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)) / totalMeals).toLocaleString() : '0'}
                   </td>
                 </tr>
                 <tr>
@@ -548,10 +548,10 @@ const UnifiedReports: React.FC = () => {
                     RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM, 0) / serviceCPMData.filter(s => s.totalMeals > 0).length).toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
-                    RWF {Math.round(overheadPerMeal).toLocaleString()}
+                    RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0) / serviceCPMData.length).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                    RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM, 0) / serviceCPMData.filter(s => s.totalMeals > 0).length).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0) + serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)) / totalMeals).toLocaleString() : '0'}
                   </td>
                 </tr>
               </tfoot>
