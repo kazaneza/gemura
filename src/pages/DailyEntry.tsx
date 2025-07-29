@@ -929,7 +929,6 @@ const DailyEntry: React.FC = () => {
                   </table>
                 </div>
               </>
-              </div>
             )}
           </div>
         )}
