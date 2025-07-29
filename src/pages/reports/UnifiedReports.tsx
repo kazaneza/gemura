@@ -154,15 +154,15 @@ const UnifiedReports: React.FC = () => {
         const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
         const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         
-        const totalOverheadCost = totalMeals * overheadPerMeal;
-        const cpm = totalMeals > 0 ? (totalIngredientCost + totalOverheadCost) / totalMeals : 0;
+        const cpm = totalMeals > 0 ? totalIngredientCost / totalMeals : 0;
+        const totalCPM = cpm + overheadPerMeal;
         
         serviceData.push({
           service,
           totalCost: totalIngredientCost,
           totalMeals,
-          cpm: Math.round(cpm),
-          totalCPM: Math.round(cpm) // Same as cpm since overhead is included
+          cpm: Math.round(cpm), // Ingredients only
+          totalCPM: Math.round(totalCPM) // Ingredients + overhead
         });
         
         grandTotalMeals += totalMeals;
@@ -497,7 +497,7 @@ const UnifiedReports: React.FC = () => {
                       RWF {(service.totalCost || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                      {service.totalMeals.toLocaleString()}
+                      RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM, 0) / serviceCPMData.length).toLocaleString() : '0'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-purple-600">
                       {service.totalMeals > 0 ? `RWF ${service.cpm.toLocaleString()}` : '-'}
@@ -506,7 +506,7 @@ const UnifiedReports: React.FC = () => {
                       {service.totalMeals > 0 ? `RWF ${Math.round(overheadPerMeal).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
-                      {service.totalMeals > 0 ? `RWF ${service.totalCPM.toLocaleString()}` : '-'}
+                      RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
                     </td>
                   </tr>
                 ))}

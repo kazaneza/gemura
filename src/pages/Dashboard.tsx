@@ -112,19 +112,19 @@ const Dashboard: React.FC = () => {
       // Today's meals and CPM
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const todayTotalOverheadCost = todayMeals * calculatedOverheadPerMeal;
-      const todayCPM = todayMeals > 0 ? (todayIngredientCost + todayTotalOverheadCost) / todayMeals : 0;
+      const todayIngredientCPM = todayMeals > 0 ? todayIngredientCost / todayMeals : 0;
+      const todayCPM = todayIngredientCPM + calculatedOverheadPerMeal;
       
       // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const lastWeekTotalOverheadCost = lastWeekMeals * calculatedOverheadPerMeal;
-      const lastWeekCPM = lastWeekMeals > 0 ? (lastWeekIngredientCost + lastWeekTotalOverheadCost) / lastWeekMeals : 0;
+      const lastWeekIngredientCPM = lastWeekMeals > 0 ? lastWeekIngredientCost / lastWeekMeals : 0;
+      const lastWeekCPM = lastWeekIngredientCPM + calculatedOverheadPerMeal;
       
       // Last month CPM
       const lastMonthIngredientCost = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const lastMonthTotalOverheadCost = lastMonthTotalMeals * calculatedOverheadPerMeal;
-      const lastMonthCPM = lastMonthTotalMeals > 0 ? (lastMonthIngredientCost + lastMonthTotalOverheadCost) / lastMonthTotalMeals : 0;
+      const lastMonthIngredientCPM = lastMonthTotalMeals > 0 ? lastMonthIngredientCost / lastMonthTotalMeals : 0;
+      const lastMonthCPM = lastMonthIngredientCPM + calculatedOverheadPerMeal;
 
       setDashboardData({
         lastMonthCPM: Math.round(lastMonthCPM),
