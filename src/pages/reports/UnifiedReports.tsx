@@ -436,27 +436,13 @@ const UnifiedReports: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-green-600" />
-              </div>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Average CPM</p>
-              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM, 0) / 3).toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
                 <Calculator className="h-5 w-5 text-red-600" />
               </div>
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">CPM</p>
-              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM, 0) / 3).toLocaleString()}</p>
+              <p className="text-2xl font-semibold text-gray-900">RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0) + serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)) / totalMeals).toLocaleString() : '0'}</p>
             </div>
           </div>
         </div>
