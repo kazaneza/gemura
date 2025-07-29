@@ -68,9 +68,43 @@ const Dashboard: React.FC = () => {
     
     return Math.round(average);
   };
+
+  // Load last month's overhead per meal
+  const loadLastMonthOverhead = async () => {
+    try {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      
+      // Get last month's indirect costs (which are now per meal amounts)
+      const indirectCosts = await indirectCostsAPI.getIndirectCosts({
+        year: lastMonth.getFullYear(),
+        month: lastMonth.getMonth() + 1
+      });
+      
+      // Sum up overhead per meal amounts from last month
+      const totalOverheadPerMeal = indirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
+      
+      console.log('Dashboard - Last month overhead calculation:', {
+        totalOverheadPerMeal,
+        month: lastMonth.getMonth() + 1
+      });
+      
+      setOverheadPerMeal(Math.round(totalOverheadPerMeal * 100) / 100);
+      
+      console.log('Dashboard - Calculated overhead per meal:', totalOverheadPerMeal);
+      
+    } catch (err: any) {
+      console.error('Failed to load last month overhead:', err);
+      setOverheadPerMeal(0); // Use 0 if calculation fails
+    }
+  };
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      
+      // Load overhead first
+      await loadLastMonthOverhead();
       
       // Get date ranges
       const today = new Date();
@@ -143,16 +177,24 @@ const Dashboard: React.FC = () => {
       // Get overhead per meal from previous month (month before last)
       const calculatedOverheadPerMeal = previousMonthIndirectCosts.reduce((sum: number, cost: any) => sum + (cost.amount || 0), 0);
       const lastMonthTotalMeals = lastMonthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      setOverheadPerMeal(calculatedOverheadPerMeal);
+      
+      console.log('Dashboard - Overhead calculation:', {
+        calculatedOverheadPerMeal,
+        lastMonthTotalMeals
+      });
+      
+      // Use the calculated overhead per meal
+      const finalOverheadPerMeal = calculatedOverheadPerMeal;
+      setOverheadPerMeal(finalOverheadPerMeal);
       
       // Calculate CPMs using service-based approach like Reports
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      const todayCPM = calculateServiceBasedCPM(todayPurchases, todayProductions, calculatedOverheadPerMeal);
+      const todayCPM = calculateServiceBasedCPM(todayPurchases, todayProductions, finalOverheadPerMeal);
       
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      const lastWeekCPM = calculateServiceBasedCPM(lastWeekPurchases, lastWeekProductions, calculatedOverheadPerMeal);
+      const lastWeekCPM = calculateServiceBasedCPM(lastWeekPurchases, lastWeekProductions, finalOverheadPerMeal);
       
-      const lastMonthCPM = calculateServiceBasedCPM(lastMonthPurchases, lastMonthProductions, calculatedOverheadPerMeal);
+      const lastMonthCPM = calculateServiceBasedCPM(lastMonthPurchases, lastMonthProductions, finalOverheadPerMeal);
 
       setDashboardData({
         lastMonthCPM: lastMonthCPM,
