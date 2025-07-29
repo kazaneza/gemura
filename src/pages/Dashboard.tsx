@@ -171,8 +171,6 @@ const Dashboard: React.FC = () => {
         })
       ]);
 
-      const lastMonthTotalMeals = lastMonthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
-      
       // Calculate CPMs using service-based approach like Reports
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const todayCPM = calculateServiceBasedCPM(todayPurchases, todayProductions, calculatedOverheadPerMeal);
@@ -180,6 +178,7 @@ const Dashboard: React.FC = () => {
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastWeekCPM = calculateServiceBasedCPM(lastWeekPurchases, lastWeekProductions, calculatedOverheadPerMeal);
       
+      const lastMonthTotalMeals = lastMonthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       const lastMonthCPM = calculateServiceBasedCPM(lastMonthPurchases, lastMonthProductions, calculatedOverheadPerMeal);
 
       setDashboardData({
