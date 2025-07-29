@@ -529,7 +529,7 @@ const UnifiedReports: React.FC = () => {
                     RWF {Math.round(overheadPerMeal).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + s.totalCost, 0) + (totalMeals * overheadPerMeal)) / totalMeals).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
                   </td>
                 </tr>
                 <tr>
@@ -543,13 +543,13 @@ const UnifiedReports: React.FC = () => {
                     {serviceCPMData.length > 0 ? Math.round(totalMeals / serviceCPMData.length).toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm, 0) / serviceCPMData.length).toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-700">
                     RWF {Math.round(overheadPerMeal).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm, 0) / serviceCPMData.length).toLocaleString() : '0'}
                   </td>
                 </tr>
               </tfoot>
