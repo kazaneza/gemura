@@ -442,7 +442,7 @@ const UnifiedReports: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">CPM</p>
-              <p className="text-2xl font-semibold text-gray-900">RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round((serviceCPMData.reduce((sum, s) => sum + (s.totalCost || 0), 0) + serviceCPMData.reduce((sum, s) => sum + (s.totalMeals * overheadPerMeal), 0)) / totalMeals).toLocaleString() : '0'}</p>
+              <p className="text-2xl font-semibold text-gray-900">RWF {Math.round(serviceCPMData.reduce((sum, s) => sum + (s.totalMeals > 0 ? ((s.totalCost || 0) + (s.totalMeals * overheadPerMeal)) / s.totalMeals : 0), 0) / 3).toLocaleString()}</p>
             </div>
           </div>
         </div>
