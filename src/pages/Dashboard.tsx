@@ -32,6 +32,27 @@ const Dashboard: React.FC = () => {
     loadDashboardData();
   }, []);
 
+  // Calculate service-based CPM like in Reports
+  const calculateServiceBasedCPM = (purchases: any[], productions: any[], overheadPerMeal: number) => {
+    const services = ['BREAKFAST', 'LUNCH', 'DINNER'];
+    const serviceCPMs: number[] = [];
+    
+    services.forEach(service => {
+      const servicePurchases = purchases.filter((p: any) => p.service === service);
+      const serviceProductions = productions.filter((p: any) => p.service === service);
+      
+      const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
+      const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
+      
+      // Use exact formula from Reports: CPM = ((meals × overhead) + ingredient cost) ÷ meals
+      // This simplifies to: CPM = overhead + (ingredient cost ÷ meals)
+      const calculatedCPM = totalMeals > 0 ? (totalIngredientCost / totalMeals) + overheadPerMeal : 0;
+      serviceCPMs.push(calculatedCPM);
+    });
+    
+    // Return average of the 3 service CPMs
+    return serviceCPMs.reduce((sum, cpm) => sum + cpm, 0) / 3;
+  };
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -109,25 +130,14 @@ const Dashboard: React.FC = () => {
       const lastMonthTotalMeals = lastMonthProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       setOverheadPerMeal(calculatedOverheadPerMeal);
       
-      // Today's meals and CPM
+      // Calculate CPMs using service-based approach like Reports
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      const todayCPM = calculateServiceBasedCPM(todayPurchases, todayProductions, calculatedOverheadPerMeal);
       
-      // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
-      // This simplifies to: CPM = overhead + (ingredient cost ÷ meals)
-      const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const todayCPM = todayMeals > 0 ? (todayIngredientCost / todayMeals) + calculatedOverheadPerMeal : 0;
-      
-      // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+      const lastWeekCPM = calculateServiceBasedCPM(lastWeekPurchases, lastWeekProductions, calculatedOverheadPerMeal);
       
-      // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
-      const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const lastWeekCPM = lastWeekMeals > 0 ? (lastWeekIngredientCost / lastWeekMeals) + calculatedOverheadPerMeal : 0;
-      
-      // Last month CPM
-      // Use exact formula from Daily Entry: CPM = ((meals × overhead) + ingredient cost) ÷ meals
-      const lastMonthIngredientCost = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-      const lastMonthCPM = lastMonthTotalMeals > 0 ? (lastMonthIngredientCost / lastMonthTotalMeals) + calculatedOverheadPerMeal : 0;
+      const lastMonthCPM = calculateServiceBasedCPM(lastMonthPurchases, lastMonthProductions, calculatedOverheadPerMeal);
 
       setDashboardData({
         lastMonthCPM: Math.round(lastMonthCPM),
