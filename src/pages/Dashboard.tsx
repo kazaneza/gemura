@@ -27,9 +27,12 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overheadPerMeal, setOverheadPerMeal] = useState(65.7); // Will be calculated from last month
+  const [sevenDayTrend, setSevenDayTrend] = useState<Array<{date: string, meals: number}>>([]);
+  const [monthlyCPMTrend, setMonthlyCPMTrend] = useState<Array<{week: string, cpm: number}>>([]);
 
   useEffect(() => {
     loadDashboardData();
+    loadChartData();
   }, []);
 
   // Calculate service-based CPM like in Reports
@@ -96,6 +99,76 @@ const Dashboard: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to load last month overhead:', err);
       setOverheadPerMeal(0); // Use 0 if calculation fails
+    }
+  };
+
+  const loadChartData = async () => {
+    try {
+      // Load 7-day meal trend
+      const sevenDayData = [];
+      const today = new Date();
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const dateStart = new Date(date);
+        dateStart.setHours(0, 0, 0, 0);
+        const dateEnd = new Date(date);
+        dateEnd.setHours(23, 59, 59, 999);
+        
+        const dayProductions = await productionAPI.getProductions({
+          start_date: dateStart.toISOString(),
+          end_date: dateEnd.toISOString()
+        });
+        
+        const dayMeals = dayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+        
+        sevenDayData.push({
+          date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          meals: dayMeals
+        });
+      }
+      
+      setSevenDayTrend(sevenDayData);
+      
+      // Load 5-week CPM trend
+      const fiveWeekData = [];
+      const currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
+      
+      for (let i = 4; i >= 0; i--) {
+        const weekStart = new Date(currentWeekStart);
+        weekStart.setDate(currentWeekStart.getDate() - (i * 7));
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        const [weekPurchases, weekProductions] = await Promise.all([
+          purchasesAPI.getPurchases({
+            start_date: weekStart.toISOString(),
+            end_date: weekEnd.toISOString()
+          }),
+          productionAPI.getProductions({
+            start_date: weekStart.toISOString(),
+            end_date: weekEnd.toISOString()
+          })
+        ]);
+        
+        const weekMeals = weekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
+        const weekCost = weekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+        const weekCPM = calculateServiceBasedCPM(weekPurchases, weekProductions, calculatedOverheadPerMeal);
+        
+        const weekLabel = i === 0 ? 'Current' : `W${5-i}`;
+        fiveWeekData.push({
+          week: weekLabel,
+          cpm: weekCPM
+        });
+      }
+      
+      setMonthlyCPMTrend(fiveWeekData);
+      
+    } catch (err: any) {
+      console.error('Failed to load chart data:', err);
+      // Keep empty arrays if loading fails
     }
   };
 
@@ -323,25 +396,25 @@ const Dashboard: React.FC = () => {
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">7-Day Meal Trend</h3>
           <div className="space-y-3">
-            {/* This would be replaced with actual chart library in production */}
-            <div className="text-sm text-gray-600">
-              Visual trend chart would be displayed here showing daily meal counts for the last 7 days.
-            </div>
             <div className="grid grid-cols-7 gap-2">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                <div key={day} className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">{day}</div>
+              {sevenDayTrend.map((day, index) => {
+                const maxMeals = Math.max(...sevenDayTrend.map(d => d.meals), 1);
+                const heightPercentage = (day.meals / maxMeals) * 80 + 20;
+                
+                return (
+                <div key={index} className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">{day.date}</div>
                   <div className="bg-red-100 rounded h-16 flex items-end justify-center">
                     <div 
                       className="bg-red-600 rounded-sm w-full"
-                      style={{ height: `${Math.random() * 80 + 20}%` }}
+                      style={{ height: `${heightPercentage}%` }}
                     ></div>
                   </div>
                   <div className="text-xs text-gray-700 mt-1">
-                    {Math.floor(Math.random() * 1000 + 500)}
+                    {day.meals.toLocaleString()}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         </div>
@@ -352,24 +425,25 @@ const Dashboard: React.FC = () => {
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly CPM Trend</h3>
           <div className="space-y-3">
-            <div className="text-sm text-gray-600">
-              CPM trend over the last 5 weeks showing cost per meal progression.
-            </div>
             <div className="grid grid-cols-5 gap-3">
-              {['W1', 'W2', 'W3', 'W4', 'Current'].map((week, index) => (
-                <div key={week} className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">{week}</div>
+              {monthlyCPMTrend.map((week, index) => {
+                const maxCPM = Math.max(...monthlyCPMTrend.map(w => w.cpm), 1);
+                const heightPercentage = (week.cpm / maxCPM) * 70 + 30;
+                
+                return (
+                <div key={index} className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">{week.week}</div>
                   <div className="bg-blue-100 rounded h-20 flex items-end justify-center">
                     <div 
                       className="bg-blue-600 rounded-sm w-full"
-                      style={{ height: `${Math.random() * 70 + 30}%` }}
+                      style={{ height: `${heightPercentage}%` }}
                     ></div>
                   </div>
                   <div className="text-xs text-gray-700 mt-1">
-                    RWF {Math.floor(Math.random() * 50 + 200)}
+                    RWF {Math.round(week.cpm).toLocaleString()}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         </div>
