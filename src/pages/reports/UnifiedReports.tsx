@@ -151,18 +151,31 @@ const UnifiedReports: React.FC = () => {
         const servicePurchases = purchases.filter((p: any) => p.service === service);
         const serviceProductions = productions.filter((p: any) => p.service === service);
         
-        const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
         const totalMeals = serviceProductions.reduce((sum: number, p: any) => sum + (p.patientsServed || 0), 0);
         
-        const ingredientCPM = totalMeals > 0 ? totalIngredientCost / totalMeals : 0;
-        const totalCPM = ingredientCPM + overheadPerMeal;
+        // Use the calculated CPM from the actual entries if available
+        const totalIngredientCost = servicePurchases.reduce((sum: number, p: any) => sum + (p.totalPrice || 0), 0);
+        
+        // Try to get the calculated CPM from the entries, fallback to calculation if not available
+        let calculatedCPM = 0;
+        if (servicePurchases.length > 0 && servicePurchases[0].calculatedCPM) {
+          // Use the stored calculated CPM from entries
+          calculatedCPM = servicePurchases[0].calculatedCPM;
+        } else if (serviceProductions.length > 0 && serviceProductions[0].calculatedCPM) {
+          // Use the stored calculated CPM from production entries
+          calculatedCPM = serviceProductions[0].calculatedCPM;
+        } else {
+          // Fallback to calculation if no stored CPM available
+          const ingredientCPM = totalMeals > 0 ? totalIngredientCost / totalMeals : 0;
+          calculatedCPM = ingredientCPM + overheadPerMeal;
+        }
         
         serviceData.push({
           service,
           totalCost: totalIngredientCost,
           totalMeals,
-          cpm: Math.round(ingredientCPM), // Ingredients only
-          totalCPM: Math.round(totalCPM) // Ingredients + overhead
+          cpm: Math.round(calculatedCPM), // Use the calculated CPM from entries
+          totalCPM: Math.round(calculatedCPM) // Same as cpm since it already includes everything
         });
         
         grandTotalMeals += totalMeals;
@@ -506,7 +519,7 @@ const UnifiedReports: React.FC = () => {
                       {service.totalMeals > 0 ? `RWF ${Math.round(overheadPerMeal).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
-                      {service.totalMeals > 0 ? `RWF ${service.totalCPM.toLocaleString()}` : '-'}
+                      {service.totalMeals > 0 ? `RWF ${service.cpm.toLocaleString()}` : '-'}
                     </td>
                   </tr>
                 ))}
@@ -523,7 +536,7 @@ const UnifiedReports: React.FC = () => {
                     {totalMeals.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-red-600">
-                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCost, 0) / totalMeals).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
                     RWF {Math.round(overheadPerMeal).toLocaleString()}
@@ -549,7 +562,7 @@ const UnifiedReports: React.FC = () => {
                     RWF {Math.round(overheadPerMeal).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600">
-                    RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM, 0) / serviceCPMData.length).toLocaleString() : '0'}
+                    RWF {serviceCPMData.length > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm, 0) / serviceCPMData.length).toLocaleString() : '0'}
                   </td>
                 </tr>
               </tfoot>
