@@ -112,42 +112,25 @@ const Dashboard: React.FC = () => {
       // Today's meals and CPM
       const todayMeals = todayProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      // Try to get calculated CPM from entries, fallback to calculation
-      let todayCPM = 0;
-      if (todayPurchases.length > 0 && todayPurchases[0].calculatedCPM) {
-        // Use stored calculated CPM from entries
-        todayCPM = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.calculatedCPM || 0), 0) / todayPurchases.length;
-      } else if (todayProductions.length > 0 && todayProductions[0].calculatedCPM) {
-        todayCPM = todayProductions.reduce((sum: number, prod: any) => sum + (prod.calculatedCPM || 0), 0) / todayProductions.length;
-      } else {
-        // Fallback calculation
-        const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-        todayCPM = todayMeals > 0 ? (todayIngredientCost / todayMeals) + calculatedOverheadPerMeal : 0;
-      }
+      // Use the same CPM calculation logic from Daily Entry
+      // CPM = (Total Ingredient Cost + Total Overhead Cost) ÷ Total Meals
+      const todayIngredientCost = todayPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const todayOverheadCost = todayMeals * calculatedOverheadPerMeal;
+      const todayCPM = todayMeals > 0 ? (todayIngredientCost + todayOverheadCost) / todayMeals : 0;
       
       // Last week CPM
       const lastWeekMeals = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.patientsServed || 0), 0);
       
-      let lastWeekCPM = 0;
-      if (lastWeekPurchases.length > 0 && lastWeekPurchases[0].calculatedCPM) {
-        lastWeekCPM = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.calculatedCPM || 0), 0) / lastWeekPurchases.length;
-      } else if (lastWeekProductions.length > 0 && lastWeekProductions[0].calculatedCPM) {
-        lastWeekCPM = lastWeekProductions.reduce((sum: number, prod: any) => sum + (prod.calculatedCPM || 0), 0) / lastWeekProductions.length;
-      } else {
-        const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-        lastWeekCPM = lastWeekMeals > 0 ? (lastWeekIngredientCost / lastWeekMeals) + calculatedOverheadPerMeal : 0;
-      }
+      // Use the same CPM calculation logic from Daily Entry
+      const lastWeekIngredientCost = lastWeekPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const lastWeekOverheadCost = lastWeekMeals * calculatedOverheadPerMeal;
+      const lastWeekCPM = lastWeekMeals > 0 ? (lastWeekIngredientCost + lastWeekOverheadCost) / lastWeekMeals : 0;
       
       // Last month CPM
-      let lastMonthCPM = 0;
-      if (lastMonthPurchases.length > 0 && lastMonthPurchases[0].calculatedCPM) {
-        lastMonthCPM = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.calculatedCPM || 0), 0) / lastMonthPurchases.length;
-      } else if (lastMonthProductions.length > 0 && lastMonthProductions[0].calculatedCPM) {
-        lastMonthCPM = lastMonthProductions.reduce((sum: number, prod: any) => sum + (prod.calculatedCPM || 0), 0) / lastMonthProductions.length;
-      } else {
-        const lastMonthIngredientCost = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
-        lastMonthCPM = lastMonthTotalMeals > 0 ? (lastMonthIngredientCost / lastMonthTotalMeals) + calculatedOverheadPerMeal : 0;
-      }
+      // Use the same CPM calculation logic from Daily Entry
+      const lastMonthIngredientCost = lastMonthPurchases.reduce((sum: number, purchase: any) => sum + (purchase.totalPrice || 0), 0);
+      const lastMonthOverheadCost = lastMonthTotalMeals * calculatedOverheadPerMeal;
+      const lastMonthCPM = lastMonthTotalMeals > 0 ? (lastMonthIngredientCost + lastMonthOverheadCost) / lastMonthTotalMeals : 0;
 
       setDashboardData({
         lastMonthCPM: Math.round(lastMonthCPM),
