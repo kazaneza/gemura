@@ -170,6 +170,7 @@ const UnifiedReports: React.FC = () => {
 
       setServiceCPMData(serviceData);
       setTotalMeals(grandTotalMeals);
+      
       setError(null);
     } catch (err: any) {
       console.error('Failed to load report data:', err);
@@ -459,6 +460,60 @@ const UnifiedReports: React.FC = () => {
               <p className="text-2xl font-semibold text-gray-900">
                 RWF {serviceCPMData.length > 0 && totalMeals > 0 ? Math.round(serviceCPMData.reduce((sum, s) => sum + s.totalCPM * s.totalMeals, 0) / totalMeals || 0).toLocaleString() : '0'}
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Service Average CPM Summary */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 print-section" id="service-averages">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Average CPM by Service</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {serviceCPMData.map((service) => (
+              <div key={service.service} className="bg-gray-50 rounded-lg p-6">
+                <div className="text-center">
+                  <div className="text-3xl mb-2">
+                    {service.service === 'BREAKFAST' ? '🌅' : 
+                     service.service === 'LUNCH' ? '🍽️' : '🌙'}
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    {getServiceName(service.service)}
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-3xl font-bold text-red-600">
+                        RWF {service.cpm.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-gray-500">Average CPM</div>
+                    </div>
+                    <div className="pt-3 border-t border-gray-200">
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div>Meals: {service.totalMeals.toLocaleString()}</div>
+                        <div>Total Cost: RWF {service.totalCost.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Overall Average */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="bg-red-50 rounded-lg p-6">
+              <div className="text-center">
+                <div className="text-sm text-red-600 font-medium mb-2">Overall Average CPM</div>
+                <div className="text-4xl font-bold text-red-900 mb-2">
+                  RWF {serviceCPMData.length > 0 && totalMeals > 0 ? 
+                    Math.round(serviceCPMData.reduce((sum, s) => sum + s.cpm * s.totalMeals, 0) / totalMeals).toLocaleString() : '0'}
+                </div>
+                <div className="text-sm text-red-700">
+                  Weighted average across all services
+                </div>
+              </div>
             </div>
           </div>
         </div>
