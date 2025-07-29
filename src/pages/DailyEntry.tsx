@@ -878,7 +878,6 @@ const DailyEntry: React.FC = () => {
                     <div>
                       <div className="text-2xl font-bold text-blue-900">
                         RWF {existingEntries.length > 0 ? Math.round(
-                      RWF {Math.round(totalIngredientCost / totalMeals + overheadPerMeal).toLocaleString()}
                           existingEntries.reduce((sum, entry) => sum + entry.totalMeals, 0)
                         ).toLocaleString() : '0'}
                       </div>
